@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Sejong Gym Check-in",
+    "slug": "sejong-gym-checkin",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "kr.ac.sejong.sgc"
+    },
+    "android": {
+      "package": "kr.ac.sejong.sgc"
+    },
+    "plugins": [
+      "expo-status-bar",
+      "expo-font"
+    ]
+  }
+}
