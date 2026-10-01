@@ -1,0 +1,60 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "required": ["userId", "studentId", "name", "email", "passwordHash", "role"],
+    "properties": {
+      "userId": {
+        "bsonType": "string",
+        "description": "Unique user identifier (e.g. student-001 or admin-001)"
+      },
+      "studentId": {
+        "bsonType": "string",
+        "pattern": "^[0-9]{8}$",
+        "description": "8-digit Sejong University Student ID"
+      },
+      "name": {
+        "bsonType": "string",
+        "description": "Full student or staff name"
+      },
+      "email": {
+        "bsonType": "string",
+        "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+        "description": "Valid university email address"
+      },
+      "passwordHash": {
+        "bsonType": "string",
+        "description": "Secure bcrypt or Argon2 password hash"
+      },
+      "role": {
+        "enum": ["student", "admin", "staff"],
+        "description": "Role-based access control (student, admin, staff)"
+      },
+      "department": {
+        "bsonType": "string",
+        "description": "Academic department or faculty"
+      },
+      "year": {
+        "bsonType": "int",
+        "minimum": 1,
+        "maximum": 6,
+        "description": "Academic year (1-6)"
+      },
+      "checkedIn": {
+        "bsonType": "bool",
+        "description": "Real-time boolean state flag for quick app status checks"
+      },
+      "checkInTime": {
+        "bsonType": ["date", "null"],
+        "description": "Timestamp of the active session check-in"
+      },
+      "createdAt": {
+        "bsonType": "date",
+        "description": "Creation timestamp"
+      },
+      "updatedAt": {
+        "bsonType": "date",
+        "description": "Last update timestamp"
+      }
+    }
+  }
+}

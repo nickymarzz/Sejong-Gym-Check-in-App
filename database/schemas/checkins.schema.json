@@ -1,0 +1,54 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "required": ["userId", "studentId", "gymId", "nfcPayload", "checkInTime", "status"],
+    "properties": {
+      "userId": {
+        "bsonType": "string",
+        "description": "User identifier reference"
+      },
+      "studentId": {
+        "bsonType": "string",
+        "pattern": "^[0-9]{8}$",
+        "description": "8-digit Sejong University Student ID"
+      },
+      "gymId": {
+        "bsonType": "string",
+        "description": "Gym facility identifier reference"
+      },
+      "gymName": {
+        "bsonType": "string",
+        "description": "Cached gym name for reporting"
+      },
+      "nfcPayload": {
+        "bsonType": "string",
+        "description": "NFC payload transmitted during tap (e.g. SGC-GYM)"
+      },
+      "checkInTime": {
+        "bsonType": "date",
+        "description": "Timestamp when student checked in"
+      },
+      "checkOutTime": {
+        "bsonType": ["date", "null"],
+        "description": "Timestamp when student checked out (null if currently active)"
+      },
+      "durationMinutes": {
+        "bsonType": ["int", "null"],
+        "minimum": 0,
+        "description": "Total workout duration in minutes"
+      },
+      "status": {
+        "enum": ["active", "completed", "auto_expired"],
+        "description": "Session status: active (currently in gym), completed (checked out), or auto_expired"
+      },
+      "createdAt": {
+        "bsonType": "date",
+        "description": "Creation timestamp"
+      },
+      "updatedAt": {
+        "bsonType": "date",
+        "description": "Last update timestamp"
+      }
+    }
+  }
+}
