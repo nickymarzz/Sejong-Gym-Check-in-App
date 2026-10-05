@@ -31,4 +31,5 @@ yarn-error.log
 coverage.xml
 phpunit.xml.bak
 composer.phar
+/composer
 storage/app/fcm-service-account.json

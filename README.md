@@ -114,12 +114,15 @@ sequenceDiagram
 | **Effects & Layout** | `expo-linear-gradient`, `react-native-safe-area-context`, `react-native-screens` |
 | **Web Support** | `react-native-web` for browser preview and cross-platform testing |
 
-### Backend & Infrastructure (Architecture Target)
+### Backend & Infrastructure (`/backend`, Implemented)
 
-| Component | Planned Technology |
+| Component | Technology |
 | --- | --- |
-| **REST API** | PHP Laravel REST API with JWT Authentication |
-| **Database** | MongoDB (handling occupancy transactions, student profiles, and visit logs) |
+| **REST API** | PHP Laravel 11 REST API with JWT Authentication (`php-open-source-saver/jwt-auth`) |
+| **Database** | MongoDB (occupancy transactions, student profiles, visit logs, daily summaries) |
+| **Queue / Cache** | Redis via `predis/predis` (`notifications`, `analytics` queues) |
+| **Push Notifications** | Firebase Cloud Messaging (FCM) via `kreait/laravel-firebase`, dispatched asynchronously |
+| **Environment** | PHP 8.5 (NTS, x64) — project-local `php-conf.d` extension injection, no system php.ini edits |
 | **NFC Hardware** | Passive NFC Stickers (NTAG213 / NTAG215 / NTAG216, NFC Forum Type 2) |
 | **Native NFC Bridge** | `react-native-nfc-manager` (via Expo Dev Client / Prebuild) |
 
@@ -131,6 +134,26 @@ sequenceDiagram
 Sejong-Gym-Check-in-App/
 ├── LICENSE
 ├── README.md
+├── backend/                          # Laravel 11 REST API (MongoDB + Redis)
+│   ├── app/
+│   │   ├── Http/
+│   │   │   ├── Controllers/          # Auth, CheckIn, Gym, Notification, Dashboard
+│   │   │   ├── Requests/             # Login / CheckIn / CheckOut request validation
+│   │   │   └── ...
+│   │   ├── Jobs/                     # SendFcmNotificationJob, UpdateDailySummaryJob
+│   │   └── Models/                   # User, Gym, CheckIn, DailySummary, Notification
+│   ├── routes/
+│   │   ├── api.php                   # REST endpoints (see API Contract)
+│   │   └── console.php               # sgc:seed and scheduled tasks
+│   ├── php-conf.d/sgc-extensions.ini # Project-local PHP extension overrides
+│   ├── composer / composer.json      # Composer LTS phar + dependency manifest
+│   └── storage/app/e2e_test.php      # End-to-end HTTP contract test
+├── scripts/                          # Windows PowerShell runners (non-XAMPP PHP 8.5)
+│   ├── setup_new_php.ps1             # One-time: install ext-mongodb, wire extensions
+│   ├── seed_db.ps1                   # Deterministic dataset seed (sgc:seed)
+│   ├── start_api.ps1                 # Boot API dev server (artisan serve)
+│   ├── start_workers.ps1             # Run Redis queue workers (notifications/analytics)
+│   └── run_tests_e2e.ps1             # Execute the E2E HTTP contract test
 └── user/                             # Student Mobile Application (Expo / React Native)
     ├── App.jsx                       # Root component with AuthProvider & AppNavigator
     ├── app.json                      # Expo application manifest & bundle configuration
@@ -215,6 +238,48 @@ From the terminal:
 - Press `a` to open in the Android Emulator.
 - Scan the printed QR code with your phone camera (iOS) or Expo Go app (Android).
 
+### 4. Run the Backend API (Laravel + MongoDB)
+
+The backend is a Laravel 11 API backed by MongoDB and Redis, with Windows PowerShell runners that do **not** require XAMPP. They target a standalone PHP 8.5 (NTS) install and fall back to `php` on `PATH` if present.
+
+**Prerequisites**
+
+- MongoDB on `127.0.0.1:27017` (installed as a Windows service).
+- Redis on `127.0.0.1:6379` (optional — otherwise `QUEUE_CONNECTION=sync` is used).
+- PHP 8.5 (NTS, x64), e.g. installed at `...\AppData\Local\Programs\PHP\current`.
+
+**One-time environment setup**
+
+```powershell
+# Installs the matching ext-mongodb PECL DLL into the PHP ext dir and
+# wires project-local `backend/php-conf.d/sgc-extensions.ini` so all
+# required extensions load with no edits to the global php.ini.
+powershell -ExecutionPolicy Bypass -File .\scripts\setup_new_php.ps1
+```
+
+**Seed the deterministic dataset**
+
+```powershell
+# Creates 28 users, 1 gym (gym-001), 159 check-ins, and 7 daily summaries.
+powershell -ExecutionPolicy Bypass -File .\scripts\seed_db.ps1
+```
+
+**Start the API / queue workers / E2E tests**
+
+```powershell
+# Boot the API dev server on port 8000 (pass a port as an argument, e.g. 8022).
+powershell -ExecutionPolicy Bypass -File .\scripts\start_api.ps1
+
+# Run Redis queue workers for the notifications and analytics queues (optional).
+powershell -ExecutionPolicy Bypass -File .\scripts\start_workers.ps1 notifications
+powershell -ExecutionPolicy Bypass -File .\scripts\start_workers.ps1 analytics
+
+# Verify the full HTTP contract against the running server.
+powershell -ExecutionPolicy Bypass -File .\scripts\run_tests_e2e.ps1
+```
+
+The API is served at `http://127.0.0.1:8000` (or the port you pass) and accepts JWT-authenticated requests from the mobile app. To connect the Expo app to the backend, point the API base URL at the served port.
+
 ---
 
 ## 🔑 Demo Credentials & Testing
@@ -227,6 +292,8 @@ The app is pre-configured with demo student credentials for immediate evaluation
 | **Password** | `password` (any non-empty string) |
 | **Student Name** | Demo Student |
 | **Department** | Department of Computer Engineering |
+| **Admin ID** | `00000001` (backend only, for admin dashboard endpoints) |
+| **Admin Password** | `password` |
 
 ### How to Test Check-in / Check-out
 
@@ -238,25 +305,43 @@ The app is pre-configured with demo student credentials for immediate evaluation
 
 ---
 
-## 📡 Backend API Contract (Planned)
+## 📡 Backend API Contract
 
-The mobile client is designed with strict separation between UI screens and backend communication. All mock service methods in `src/services/mock/` adhere to the future Laravel REST API specification:
+The mobile client is designed with strict separation between UI screens and backend communication. The mock services in `src/services/mock/` mirror the implemented Laravel API; the backend request/response envelope is always `{ status, message, data }`. All endpoints below are served at `http://127.0.0.1:8000/api`.
 
 ### Authentication
 
-- `POST /api/auth/login` — Accepts `{ studentId, password }`, returns `{ user, token }`.
-- `POST /api/auth/logout` — Invalidates the current session token.
-- `GET /api/auth/me` — Returns current authenticated student profile.
+- `POST /api/auth/login` — Body: `{ studentId, password }` → returns `{ user, token }`.
+- `POST /api/auth/refresh` — Refreshes the current JWT.
+- `GET /api/auth/me` — `Authorization: Bearer <token>` → current authenticated student profile.
+- `POST /api/auth/logout` — `Authorization: Bearer <token>` → invalidates the current session token.
 
 ### Facility & Occupancy
 
 - `GET /api/gyms` — List all campus gyms and their capacities.
-- `GET /api/gyms/:id/status` — Live occupancy count, status (`open` | `closed` | `maintenance`), and hours.
+- `GET /api/gyms/{gymId}` — Single gym details.
+- `GET /api/gym/status` / `GET /api/gym/status/{gymId}` — Live occupancy count, status (`open` | `closed` | `maintenance`), and hours.
 
-### Check-in / Check-out
+### Check-in / Check-out (NFC)
 
-- `POST /api/checkins` — Header `Authorization: Bearer <token>`, Body: `{ gymId, nfcPayload }`.
-- `POST /api/checkouts` — Header `Authorization: Bearer <token>`, Body: `{ gymId, nfcPayload }`.
+- `POST /api/checkins` — `Authorization: Bearer <token>`, Body: `{ gymId, nfcPayload }` where `nfcPayload` must equal `"SGC-GYM"`. Validates identity, capacity, opening hours, and prevents duplicate active sessions (transactional + partial unique index).
+- `POST /api/checkouts` / `POST /api/checkins/checkout` — `Authorization: Bearer <token>`, Body: `{ gymId, nfcPayload }`. Ends the active session and decrements occupancy.
+- `GET /api/checkins/history` — Current student's past sessions with duration and status.
+- `GET /api/checkins/active` — Current student's active session, if any.
+
+### Notifications (FCM)
+
+- `GET /api/notifications` — Current student's notifications.
+- `GET /api/notifications/unread-count` — Unread notification count.
+- `POST /api/notifications/{notificationId}/read` — Mark one notification read.
+- `POST /api/notifications/read-all` — Mark all notifications read.
+
+### Admin Dashboard
+
+- `GET /api/dashboard/gyms/{gymId}/summary/{date}` — Daily occupancy summary for a gym.
+- `GET /api/dashboard/gyms/{gymId}/weekly` — Weekly occupancy summary for a gym.
+
+> **Error handling:** unknown routes return a `404` fallback with the same envelope. A duplicate active check-in returns `409`; a check-out without a prior check-in returns `409`.
 
 ---
 
@@ -269,8 +354,8 @@ The mobile client is designed with strict separation between UI screens and back
 - [x] Interactive Developer Panel for scenario simulation.
 - [x] Visit history and session duration logging.
 - [x] Profile, workout streak, and notifications screen.
+- [x] Backend development: Laravel REST API & MongoDB schema (capacity-safe NFC check-in, JWT auth, FCM, daily/weekly summaries).
 - [ ] Connect production native NFC reading via `react-native-nfc-manager` (Expo Dev Client).
-- [ ] Backend development: Laravel REST API & MongoDB schema.
 - [ ] Real-time WebSocket or Server-Sent Events (SSE) for instantaneous occupancy updates across all student devices.
 - [ ] Administrator web dashboard for gym staff to monitor capacity and override limits.
 
