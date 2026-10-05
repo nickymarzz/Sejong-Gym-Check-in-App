@@ -11,7 +11,7 @@
 If you are new to MongoDB and databases, here is the easiest way to understand how it works compared to relational SQL:
 
 | Concept | SQL Relational (MySQL / Postgres) | MongoDB (NoSQL) | Sejong Gym Example |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Container** | Database | Database | `sejong_gym` |
 | **Table** | Table | **Collection** | `Users`, `CheckIns`, `Gyms`, `DailySummaries` |
 | **Row / Record** | Row | **Document** (BSON / JSON format) | A single student's profile or single gym visit |
@@ -25,7 +25,9 @@ If you are new to MongoDB and databases, here is the easiest way to understand h
 All collections are enforced with strict **`$jsonSchema` validation** and **optimized indexes**:
 
 ### 1. `Users`
+
 Stores student and staff accounts.
+
 - `userId` (String): e.g. `"student-001"`
 - `studentId` (String): 8-digit Sejong ID (e.g. `"20241234"`) — **Unique Index**
 - `name` (String): Full student name
@@ -38,7 +40,9 @@ Stores student and staff accounts.
 - `checkInTime` (Date / Null)
 
 ### 2. `Gyms`
+
 Stores physical gym configuration and live state.
+
 - `gymId` (String): `"gym-001"` — **Unique Index**
 - `gymName` (String): `"Sejong University Gymnasium"`
 - `location` (String): `"Student Union Building B, 3F"`
@@ -49,7 +53,9 @@ Stores physical gym configuration and live state.
 - `openingHours` (Object): `{ open: "06:00", close: "22:00" }`
 
 ### 3. `CheckIns`
+
 Logs all gym visits triggered by passive NFC tap + JWT authentication.
+
 - `userId` (String): Student ID reference
 - `studentId` (String): 8-digit student ID
 - `gymId` (String): `"gym-001"`
@@ -64,7 +70,9 @@ Logs all gym visits triggered by passive NFC tap + JWT authentication.
 > Even if a student double-taps the NFC tag rapidly or an attacker fires concurrent requests, **MongoDB will reject the duplicate check-in at the database layer** (Error 11000).
 
 ### 4. `DailySummaries`
+
 Aggregated daily metrics powering Javo's Admin Dashboard (Chart.js).
+
 - `gymId` (String) & `date` (String YYYY-MM-DD) — **Compound Unique Index**
 - `totalVisits`, `uniqueStudents`, `peakOccupancy`, `peakHour`, `averageDurationMinutes`
 - `hourlyBreakdown`: Array of `{ hour, visits, occupancy }` for graphs
@@ -76,31 +84,39 @@ Aggregated daily metrics powering Javo's Admin Dashboard (Chart.js).
 Open your terminal in the project root:
 
 ### 1. Initialize Collections & Indexes
+
 ```bash
 mongosh sejong_gym database/init_db.js
 ```
 
 ### 2. Seed Realistic Test Data
+
 ```bash
 mongosh sejong_gym database/seed.js
 ```
+
 *Seeds:*
+
 - Sejong Gymnasium (`gym-001`, capacity 50, occupancy 24).
 - 28 Users (Demo student `20241234`, other students, and gym admin). All passwords default to `password` (hashed).
 - 150+ Check-in records (including 24 active in-gym sessions).
 - 7 days of daily analytics.
 
 ### 3. Run Security & Edge-Case Verification Tests
+
 ```bash
 mongosh sejong_gym database/test_security.js
 ```
+
 *Verifies:*
+
 - Duplicate active check-ins are blocked by the database.
 - Multiple completed visits are permitted.
 - All passwords are encrypted with bcrypt.
 - Invalid student ID formats are rejected by the schema.
 
 ### 4. Run Sample Inspection Queries
+
 ```bash
 mongosh sejong_gym database/queries/sample_queries.js
 ```
@@ -110,11 +126,13 @@ mongosh sejong_gym database/queries/sample_queries.js
 ## 🛠️ Handy `mongosh` Commands Cheatsheet for Zafri
 
 To open the interactive MongoDB prompt:
+
 ```bash
 mongosh sejong_gym
 ```
 
 Inside `mongosh`:
+
 ```javascript
 // 1. Show all collections
 show collections
@@ -145,11 +163,13 @@ exit
 - **For Nik (Backend & API Lead)**:
   - MongoDB connection URI: `mongodb://127.0.0.1:27017/sejong_gym`
   - In Laravel `.env`:
+
     ```ini
     DB_CONNECTION=mongodb
     MONGODB_URI="mongodb://127.0.0.1:27017/sejong_gym"
     MONGODB_DATABASE=sejong_gym
     ```
+
 - **For Jedrek (Mobile App Lead)**:
   - Demo student `20241234` / `password` is seeded and matches mobile mock fixtures.
 - **For Javo (Admin Dashboard Lead)**:

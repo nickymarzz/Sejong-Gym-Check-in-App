@@ -30,6 +30,7 @@
 The Sejong University Gymnasium is a popular on-campus amenity with limited physical capacity (e.g., 50 occupants). During peak academic hours, students frequently face overcrowding, long lines, or arrive only to find the facility at capacity. Traditional paper sign-in sheets are prone to inaccurate records, manual overhead, and inability to track real-time occupancy.
 
 **Sejong Gym Check-in (SGC)** solves this with a mobile-first digital check-in platform:
+
 - **Live Occupancy Tracking**: Students can check current gym capacity and status before leaving their dorm or classroom.
 - **Frictionless NFC Tap**: Check in or out in seconds by simply tapping a passive NFC sticker placed at the gym door.
 - **Privacy & Fraud Prevention**: Hardware stickers store zero student data; authentication is secured through student credentials and JWT tokens.
@@ -40,6 +41,7 @@ The Sejong University Gymnasium is a popular on-campus amenity with limited phys
 ## 🔐 System Architecture & NFC Security Model
 
 ### The Passive Sticker Model
+
 Unlike systems that require expensive dedicated smart kiosks or cards that encode sensitive user credentials, SGC utilizes **low-cost passive NFC stickers** (NFC Forum Type 2 / NTAG series) fixed at the entrance and exit:
 
 ```mermaid
@@ -61,7 +63,8 @@ sequenceDiagram
     API-->>Student: 200 OK { updatedGym, updatedUser }
 ```
 
-### Security & Privacy Highlights:
+### Security & Privacy Highlights
+
 1. **Zero Data on Sticker**: The passive sticker broadcasts **only** the static string `"SGC-GYM"`. It contains **no** student ID, no occupancy counts, and no database records.
 2. **Authenticated Student Token**: Student identity is derived exclusively from the authenticated session (Bearer JWT) inside the mobile app.
 3. **Server-Side Enforcement**: All concurrency handling, occupancy increments/decrements, opening hours checks, and double-tap prevention are validated on the backend.
@@ -101,8 +104,9 @@ sequenceDiagram
 ## 🛠 Tech Stack
 
 ### Mobile Client (`/user`)
+
 | Technology | Description |
-|---|---|
+| --- | --- |
 | **Framework** | [React Native](https://reactnative.dev/) (v0.86.3) with [Expo](https://expo.dev/) (SDK 57) |
 | **Language** | Modern JavaScript (ES6+ / JSX) |
 | **Navigation** | [React Navigation 7](https://reactnavigation.org/) (Native Stack & Bottom Tabs) |
@@ -111,8 +115,9 @@ sequenceDiagram
 | **Web Support** | `react-native-web` for browser preview and cross-platform testing |
 
 ### Backend & Infrastructure (Architecture Target)
+
 | Component | Planned Technology |
-|---|---|
+| --- | --- |
 | **REST API** | PHP Laravel REST API with JWT Authentication |
 | **Database** | MongoDB (handling occupancy transactions, student profiles, and visit logs) |
 | **NFC Hardware** | Passive NFC Stickers (NTAG213 / NTAG215 / NTAG216, NFC Forum Type 2) |
@@ -174,6 +179,7 @@ Sejong-Gym-Check-in-App/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - [Node.js](https://nodejs.org/) (v18.x or v20.x recommended)
 - `npm` (v9+ or v10+)
 - Mobile testing options:
@@ -183,23 +189,27 @@ Sejong-Gym-Check-in-App/
   - **Web Browser**: Supported out of the box via React Native for Web.
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/nickymarzz/Sejong-Gym-Check-in-App.git
 cd Sejong-Gym-Check-in-App/user
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 3. Run the Development Server
+
 ```bash
 # Start the Expo development server
 npm run start
 ```
 
 From the terminal:
+
 - Press `w` to open in your web browser.
 - Press `i` to open in the iOS Simulator.
 - Press `a` to open in the Android Emulator.
@@ -212,13 +222,14 @@ From the terminal:
 The app is pre-configured with demo student credentials for immediate evaluation:
 
 | Field | Demo Value |
-|---|---|
+| --- | --- |
 | **Student ID** | `20241234` (must be 8 digits) |
 | **Password** | `password` (any non-empty string) |
 | **Student Name** | Demo Student |
 | **Department** | Department of Computer Engineering |
 
-### How to Test Check-in / Check-out:
+### How to Test Check-in / Check-out
+
 1. Sign in using the demo credentials above.
 2. On the **Home** tab, tap **"Tap to Check In"** to open the animated NFC scanning radar.
 3. The simulated NFC reader will scan and validate the `"SGC-GYM"` payload, automatically checking you in and incrementing the gym's live occupancy.
@@ -232,21 +243,24 @@ The app is pre-configured with demo student credentials for immediate evaluation
 The mobile client is designed with strict separation between UI screens and backend communication. All mock service methods in `src/services/mock/` adhere to the future Laravel REST API specification:
 
 ### Authentication
+
 - `POST /api/auth/login` — Accepts `{ studentId, password }`, returns `{ user, token }`.
 - `POST /api/auth/logout` — Invalidates the current session token.
 - `GET /api/auth/me` — Returns current authenticated student profile.
 
 ### Facility & Occupancy
+
 - `GET /api/gyms` — List all campus gyms and their capacities.
 - `GET /api/gyms/:id/status` — Live occupancy count, status (`open` | `closed` | `maintenance`), and hours.
 
 ### Check-in / Check-out
+
 - `POST /api/checkins` — Header `Authorization: Bearer <token>`, Body: `{ gymId, nfcPayload }`.
 - `POST /api/checkouts` — Header `Authorization: Bearer <token>`, Body: `{ gymId, nfcPayload }`.
 
 ---
 
-## 🗺️ Roadmap
+## 📍 Roadmap
 
 - [x] Initial Expo React Native application prototype.
 - [x] Student authentication flow and session state management.
