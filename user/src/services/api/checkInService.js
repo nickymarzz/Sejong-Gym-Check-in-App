@@ -62,13 +62,21 @@ export async function getHistory() {
     const formatted = res.data.map(item => {
       const inDate = item.checkInTime ? new Date(item.checkInTime) : new Date();
       const outDate = item.checkOutTime ? new Date(item.checkOutTime) : null;
+      let duration = item.durationMinutes;
+      if ((duration === 0 || duration === null || duration === undefined) && outDate && inDate) {
+        const diffMs = Math.max(0, outDate.getTime() - inDate.getTime());
+        duration = Math.max(1, Math.round(diffMs / 60000));
+      }
       return {
         id: item._id,
         gymName: item.gymName || 'Student Union Gym',
         dateLabel: inDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         checkInTime: inDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
         checkOutTime: outDate ? outDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : null,
-        durationMinutes: item.durationMinutes || 0,
+        rawCheckInTime: item.checkInTime,
+        rawCheckOutTime: item.checkOutTime,
+        timestamp: inDate.getTime(),
+        durationMinutes: duration ?? 0,
         status: item.status === 'completed' ? 'checkedOut' : (item.status === 'active' ? 'checkedIn' : 'missed'),
       };
     });

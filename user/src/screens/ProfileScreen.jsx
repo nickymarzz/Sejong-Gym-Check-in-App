@@ -8,12 +8,14 @@ import {
   RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import ScreenWrapper from '../components/ScreenWrapper';
 import Header from '../components/Header';
 import ToastAlert from '../components/ToastAlert';
 import { AuthContext } from '../context/AuthContext';
 import { theme } from '../theme';
-import { notificationService } from '../services';
+import { notificationService, checkInService } from '../services';
+import { initialCheckInHistory } from '../data/mockCheckInHistory';
 
 function iconFor(t) {
   switch (t) {
@@ -34,18 +36,116 @@ function prettyTime(ts) {
   return `${d}d ago`;
 }
 
+function computeUserStats(history) {
+  if (!Array.isArray(history) || history.length === 0) {
+    return {
+      weeklySessions: '0 sessions',
+      totalHours: '0 hrs',
+      streak: '0 days',
+    };
+  }
+
+  const now = new Date();
+
+  // 1. Total hours
+  let totalMinutes = 0;
+  history.forEach(item => {
+    if (typeof item.durationMinutes === 'number' && item.durationMinutes > 0) {
+      totalMinutes += item.durationMinutes;
+    }
+  });
+  const totalHrs = (totalMinutes / 60).toFixed(1);
+  const formattedHours = totalHrs.endsWith('.0') 
+    ? `${Math.floor(totalMinutes / 60)} hrs` 
+    : `${totalHrs} hrs`;
+
+  // 2. This week sessions (past 7 days)
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const weeklySessionsCount = history.filter(item => {
+    const time = item.timestamp || (item.rawCheckInTime ? new Date(item.rawCheckInTime).getTime() : 0);
+    return time >= oneWeekAgo.getTime();
+  }).length;
+
+  // 3. Consecutive day streak
+  const dateSet = new Set();
+  const getLocalDateStr = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  history.forEach(item => {
+    const d = item.rawCheckInTime ? new Date(item.rawCheckInTime) : (item.timestamp ? new Date(item.timestamp) : null);
+    if (d && !isNaN(d.getTime())) {
+      dateSet.add(getLocalDateStr(d));
+    }
+  });
+
+  let streak = 0;
+  const cursor = new Date(now);
+  const todayStr = getLocalDateStr(cursor);
+  cursor.setDate(cursor.getDate() - 1);
+  const yesterdayStr = getLocalDateStr(cursor);
+
+  let checkCursor = new Date(now);
+  if (!dateSet.has(todayStr) && dateSet.has(yesterdayStr)) {
+    checkCursor.setDate(checkCursor.getDate() - 1);
+  }
+
+  while (true) {
+    const ds = getLocalDateStr(checkCursor);
+    if (dateSet.has(ds)) {
+      streak++;
+      checkCursor.setDate(checkCursor.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return {
+    weeklySessions: `${weeklySessionsCount} session${weeklySessionsCount === 1 ? '' : 's'}`,
+    totalHours: formattedHours,
+    streak: `${streak} day${streak === 1 ? '' : 's'}`,
+  };
+}
+
 export default function ProfileScreen() {
   const { currentUser, logout } = useContext(AuthContext);
   const [notifs, setNotifs] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
+  const [statsData, setStatsData] = useState({
+    weeklySessions: '—',
+    totalHours: '—',
+    streak: '—',
+  });
 
   const load = useCallback(async () => {
-    const r = await notificationService.getNotifications();
-    if (r.success) setNotifs(r.data);
-  }, []);
+    try {
+      const r = await notificationService.getNotifications();
+      if (r?.success && Array.isArray(r.data)) setNotifs(r.data);
+    } catch (_) {}
 
-  useEffect(() => { load(); }, [load]);
+    try {
+      const h = await checkInService.getHistory();
+      if (h?.success && Array.isArray(h.data) && h.data.length > 0) {
+        setStatsData(computeUserStats(h.data));
+        return;
+      }
+    } catch (_) {}
+
+    const filtered = initialCheckInHistory.filter(
+      r => !currentUser?.userId || r.userId === currentUser.userId,
+    );
+    setStatsData(computeUserStats(filtered));
+  }, [currentUser?.userId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -60,15 +160,26 @@ export default function ProfileScreen() {
   };
 
   const stats = [
-    { label: 'This week', value: '3 sessions', icon: 'calendar-week', color: theme.colors.primary },
-    { label: 'Total hours', value: '6.5 hrs', icon: 'clock-outline', color: theme.colors.success },
-    { label: 'Current streak', value: '2 days', icon: 'fire', color: theme.colors.warning },
+    { label: 'This week', value: statsData.weeklySessions, icon: 'calendar-week', color: theme.colors.primary },
+    { label: 'Total hours', value: statsData.totalHours, icon: 'clock-outline', color: theme.colors.success },
+    { label: 'Current streak', value: statsData.streak, icon: 'fire', color: theme.colors.warning },
   ];
 
   return (
     <View style={{ flex: 1 }}>
       <Header userData={currentUser} onLogout={logout} title="Profile" subtitle="Account & Notifications" />
-      <ScreenWrapper padTop={false} padBottom={false}>
+      <ScreenWrapper
+        padTop={false}
+        padBottom={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+          />
+        }
+      >
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
@@ -108,9 +219,6 @@ export default function ProfileScreen() {
           scrollEnabled={false}
           keyExtractor={(i) => i.id}
           contentContainerStyle={{ gap: 10, paddingBottom: 24 }}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
           renderItem={({ item }) => {
             const color =
               item.type === 'alert' ? theme.colors.danger :

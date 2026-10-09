@@ -16,16 +16,50 @@ export default function CapacityCard({ gymData }) {
         ? '#ffa726'
         : '#66bb6a';
 
-  const isOpen = gymData.status === 'open';
+  const getStatusBadge = () => {
+    const status = (gymData.status || '').toLowerCase();
+    const isFull = gymData.capacity > 0 && gymData.currentOccupancy >= gymData.capacity;
+
+    if (status === 'maintenance') {
+      return {
+        label: 'Maintenance',
+        pillStyle: styles.pillMaintenance,
+        textStyle: styles.textMaintenance,
+      };
+    }
+
+    if (status === 'open') {
+      if (isFull) {
+        return {
+          label: 'Full',
+          pillStyle: styles.pillClosed,
+          textStyle: styles.textClosed,
+        };
+      }
+      return {
+        label: 'Open',
+        pillStyle: styles.pillOpen,
+        textStyle: styles.textOpen,
+      };
+    }
+
+    return {
+      label: 'Closed',
+      pillStyle: styles.pillClosed,
+      textStyle: styles.textClosed,
+    };
+  };
+
+  const badge = getStatusBadge();
   const available = Math.max(0, gymData.capacity - gymData.currentOccupancy);
 
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>Current Gym Capacity</Text>
-        <View style={[styles.statusPill, isOpen ? styles.pillOpen : styles.pillClosed]}>
-          <Text style={[styles.pillText, isOpen ? styles.textOpen : styles.textClosed]}>
-            {isOpen ? 'Open' : 'Closed'}
+        <View style={[styles.statusPill, badge.pillStyle]}>
+          <Text style={[styles.pillText, badge.textStyle]}>
+            {badge.label}
           </Text>
         </View>
       </View>
@@ -105,9 +139,14 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.dangerBg,
     borderColor: theme.colors.dangerBorder,
   },
+  pillMaintenance: {
+    backgroundColor: theme.colors.warningBg,
+    borderColor: theme.colors.warningBorder,
+  },
   pillText: { fontSize: 12, fontWeight: theme.fontWeight.bold, letterSpacing: 0.3 },
   textOpen: { color: theme.colors.success },
   textClosed: { color: theme.colors.danger },
+  textMaintenance: { color: theme.colors.warning },
 
   capacityDisplay: { alignItems: 'center', marginBottom: 20 },
   numbersRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 4 },

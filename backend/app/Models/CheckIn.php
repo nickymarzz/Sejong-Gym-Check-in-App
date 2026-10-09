@@ -86,7 +86,8 @@ class CheckIn extends Model
         $now = now();
         $this->checkOutTime = $now;
         if ($this->checkInTime) {
-            $this->durationMinutes = max(0, (int) $now->diffInMinutes($this->checkInTime));
+            $diffSeconds = abs($now->diffInSeconds($this->checkInTime));
+            $this->durationMinutes = max(1, (int) ceil($diffSeconds / 60));
         }
         $this->status = self::STATUS_COMPLETED;
         $this->save();

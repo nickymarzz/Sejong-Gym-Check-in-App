@@ -19,7 +19,7 @@
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
 - [Demo Credentials & Testing](#-demo-credentials--testing)
-- [Backend API Contract (Planned)](#-backend-api-contract-planned)
+- [Backend API Contract](#-backend-api-contract)
 - [Roadmap](#-roadmap)
 - [License](#-license)
 
@@ -161,40 +161,44 @@ Sejong-Gym-Check-in-App/
     ├── index.js                      # Entry point registering the root component
     ├── package.json                  # Dependencies and scripts
     └── src/
+        ├── config.js                 # Dynamic API URL resolution (LAN IP discovery for Expo Go)
         ├── theme.js                  # Centralized design system (colors, typography, spacing, shadows)
         ├── components/               # Reusable UI components
         │   ├── CapacityCard.jsx      # Gym capacity gauge and occupancy progress bar
         │   ├── DevPanel.jsx          # Collapsible NFC test scenario trigger panel
         │   ├── Header.jsx            # Top app bar with student greeting and logout
         │   ├── PrimaryButton.jsx     # Reusable action button with loading states
-        │   ├── ScreenWrapper.jsx     # Safe-area and keyboard handling wrapper
+        │   ├── ScreenWrapper.jsx     # Safe-area and pull-to-refresh wrapper
         │   ├── ToastAlert.jsx        # Notification alert banners (success / error / warning)
         │   └── UserStatus.jsx        # Current student check-in badge and session duration
         ├── context/
         │   └── AuthContext.jsx       # Global authentication state, login, and user session management
-        ├── data/                     # Mock fixtures and initial states
+        ├── data/                     # Offline fallback fixtures and initial states
         │   ├── mockCheckInHistory.js # Sample past gym visits
         │   ├── mockGyms.js           # Sejong gym capacity, hours, and status
         │   ├── mockNotifications.js  # Announcements and alerts
         │   └── mockUsers.js          # Demo student profile
+        ├── hooks/                    # Custom React hooks
+        │   └── useLiveOccupancy.js   # Real-time occupancy auto-polling hook (background-aware)
         ├── navigation/
         │   ├── AppNavigator.jsx      # Conditional stack navigator (Auth vs Authenticated tabs)
         │   └── MainTabs.jsx          # Bottom tab bar (Home, History, Profile) with dynamic insets
         ├── screens/                  # Main user interfaces
-        │   ├── HomeScreen.jsx        # Gym status, primary action button, DevPanel
-        │   ├── HistoryScreen.jsx     # Workout session records & status badges
+        │   ├── HomeScreen.jsx        # Gym status, primary action button, DevPanel, pull-to-refresh
+        │   ├── HistoryScreen.jsx     # Workout session records & status badges, pull-to-refresh
         │   ├── LoginScreen.jsx       # Student ID & password form
         │   ├── NfcScanScreen.jsx     # Full-screen radar scan modal with NFC simulation
-        │   └── ProfileScreen.jsx     # Student stats, streak, details, notifications
-        └── services/                 # Business logic and external communication layer
-            ├── mock/                 # Mock implementations mirroring future API contracts
-            │   ├── _utils.js         # Async delay and formatting helpers
-            │   ├── authService.js    # Student authentication and JWT generation
-            │   ├── checkInService.js # Check-in/out logic, preconditions, state mutation
-            │   ├── gymService.js     # Facility occupancy retrieval and state update
-            │   └── notificationService.js # User notifications and read flags
-            └── nfc/
-                └── nfcService.js     # NFC reader interface, payload validation, mock runner
+        │   └── ProfileScreen.jsx     # Student stats, streak, details, notifications, pull-to-refresh
+        └── services/                 # Business logic and communication layer
+            ├── api/                  # Live Laravel 11 REST API client (Active)
+            │   ├── client.js         # Fetch client with Bearer JWT interceptor
+            │   ├── authService.js    # Live student authentication & JWT handling
+            │   ├── checkInService.js # Live check-in/out, history, and active sessions
+            │   ├── gymService.js     # Live facility capacity retrieval
+            │   └── notificationService.js # Notifications and read state sync
+            ├── mock/                 # Mock fallback implementations
+            ├── nfc/                  # NFC reader interface, payload validation, mock runner
+            └── index.js              # Service dispatcher (switches live API vs mock via config)
 ```
 
 ---
@@ -242,13 +246,13 @@ From the terminal:
 
 The backend is a Laravel 11 API backed by MongoDB and Redis, with Windows PowerShell runners that do **not** require XAMPP. They target a standalone PHP 8.5 (NTS) install and fall back to `php` on `PATH` if present.
 
-**Prerequisites**
+#### Backend Prerequisites
 
 - MongoDB on `127.0.0.1:27017` (installed as a Windows service).
 - Redis on `127.0.0.1:6379` (optional — otherwise `QUEUE_CONNECTION=sync` is used).
 - PHP 8.5 (NTS, x64), e.g. installed at `...\AppData\Local\Programs\PHP\current`.
 
-**One-time environment setup**
+#### One-time environment setup
 
 ```powershell
 # Installs the matching ext-mongodb PECL DLL into the PHP ext dir and
@@ -257,14 +261,14 @@ The backend is a Laravel 11 API backed by MongoDB and Redis, with Windows PowerS
 powershell -ExecutionPolicy Bypass -File .\scripts\setup_new_php.ps1
 ```
 
-**Seed the deterministic dataset**
+#### Seed the deterministic dataset
 
 ```powershell
 # Creates 28 users, 1 gym (gym-001), 159 check-ins, and 7 daily summaries.
 powershell -ExecutionPolicy Bypass -File .\scripts\seed_db.ps1
 ```
 
-**Start the API / queue workers / E2E tests**
+#### Start the API / queue workers / E2E tests
 
 ```powershell
 # Boot the API dev server on port 8000 (pass a port as an argument, e.g. 8022).
@@ -278,7 +282,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start_workers.ps1 analytics
 powershell -ExecutionPolicy Bypass -File .\scripts\run_tests_e2e.ps1
 ```
 
-The API is served at `http://127.0.0.1:8000` (or the port you pass) and accepts JWT-authenticated requests from the mobile app. To connect the Expo app to the backend, point the API base URL at the served port.
+The API server binds to `http://0.0.0.0:8000` (via `.\scripts\start_api.ps1`) to allow incoming requests from mobile phones running Expo Go on the local Wi-Fi. The mobile client (`user/src/config.js`) dynamically resolves the computer's LAN IP address from `Constants.expoConfig.hostUri`, allowing seamless testing without manual IP configuration.
 
 ---
 
@@ -349,13 +353,16 @@ The mobile client is designed with strict separation between UI screens and back
 
 - [x] Initial Expo React Native application prototype.
 - [x] Student authentication flow and session state management.
-- [x] Live gym capacity card with dynamic status indicators.
+- [x] Live gym capacity card with dynamic status indicators (`Open`, `Full`, `Closed`, `Maintenance`).
 - [x] Interactive NFC scanning interface with realistic mock outcomes.
 - [x] Interactive Developer Panel for scenario simulation.
-- [x] Visit history and session duration logging.
-- [x] Profile, workout streak, and notifications screen.
+- [x] Visit history and session duration logging (supporting `< 1m` and 12-hour AM/PM formats).
+- [x] Profile, workout streak, and notifications screen with dynamic statistics computation.
 - [x] Backend development: Laravel REST API & MongoDB schema (capacity-safe NFC check-in, JWT auth, FCM, daily/weekly summaries).
-- [ ] Connect production native NFC reading via `react-native-nfc-manager` (Expo Dev Client).
+- [x] Mobile & Backend Live Integration: connected to Laravel REST API with dynamic Wi-Fi IP discovery.
+- [x] Real-time facility capacity auto-polling hook (`useLiveOccupancy`) with app lifecycle/background detection.
+- [x] Pull-to-refresh gesture support across Home, History, and Profile screens.
+- [ ] Connect production native NFC reading via `react-native-nfc-manager` (Expo Dev Client / physical stickers).
 - [ ] Real-time WebSocket or Server-Sent Events (SSE) for instantaneous occupancy updates across all student devices.
 - [ ] Administrator web dashboard for gym staff to monitor capacity and override limits.
 

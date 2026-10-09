@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import ScreenWrapper from '../components/ScreenWrapper';
 import Header from '../components/Header';
 import { theme } from '../theme';
@@ -47,13 +48,31 @@ function statusStyle(s) {
   }
 }
 
+function formatDuration(item) {
+  if (item.status === 'checkedIn') {
+    return 'Active';
+  }
+  if (typeof item.durationMinutes === 'number' && item.durationMinutes > 0) {
+    const hours = Math.floor(item.durationMinutes / 60);
+    const mins = item.durationMinutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  }
+  if (item.status === 'checkedOut' || item.checkOutTime) {
+    return '< 1m';
+  }
+  return '—';
+}
+
 export default function HistoryScreen() {
   const { currentUser, logout } = useContext(AuthContext);
   const [items, setItems] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await checkInService.getHistory();
       if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
@@ -65,11 +84,13 @@ export default function HistoryScreen() {
       (r) => !currentUser?.userId || r.userId === currentUser.userId,
     );
     setItems(filtered.slice());
-  };
-
-  useEffect(() => {
-    load().finally(() => setLoading(false));
   }, [currentUser?.userId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      load().finally(() => setLoading(false));
+    }, [load])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -115,9 +136,7 @@ export default function HistoryScreen() {
           <View style={styles.durationBlock}>
             <Text style={styles.timeLabel}>DURATION</Text>
             <Text style={styles.durationValue}>
-              {item.durationMinutes
-                ? `${Math.floor(item.durationMinutes / 60)}h ${item.durationMinutes % 60}m`
-                : '—'}
+              {formatDuration(item)}
             </Text>
           </View>
         </View>
@@ -153,7 +172,12 @@ export default function HistoryScreen() {
             contentContainerStyle={{ paddingBottom: 40, gap: 14 }}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme.colors.primary]}
+                tintColor={theme.colors.primary}
+              />
             }
             ListEmptyComponent={
               <View style={styles.emptyWrap}>

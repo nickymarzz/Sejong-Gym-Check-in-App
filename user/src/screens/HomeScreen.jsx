@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext, useMemo } from 'react';
-import { View, Text, StyleSheet, Modal } from 'react-native';
+import { View, Text, StyleSheet, Modal, RefreshControl } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { theme } from '../theme';
 import ScreenWrapper from '../components/ScreenWrapper';
@@ -16,12 +16,53 @@ import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
 export default function HomeScreen() {
   const { currentUser, updateUser, logout } = useContext(AuthContext);
 
-  const { gymData, setGymData } = useLiveOccupancy('gym-001', 3500);
+  const { gymData, setGymData, refresh } = useLiveOccupancy('gym-001', 3500);
   const [userData, setUserData] = useState(currentUser);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
   const [nfcVisible, setNfcVisible] = useState(false);
   const [nfcMode, setNfcMode] = useState('in'); // 'in' | 'out'
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      if (refresh) await refresh();
+      try {
+        const activeRes = await checkInService.getActiveSession();
+        if (activeRes?.success) {
+          if (activeRes.data) {
+            const inTimeStr = activeRes.data.checkInTime
+              ? new Date(activeRes.data.checkInTime).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                })
+              : userData?.checkInTime;
+            const updated = {
+              ...userData,
+              checkedIn: true,
+              checkInTime: inTimeStr,
+              currentGym: activeRes.data.gymName || 'Student Union Gym',
+            };
+            setUserData(updated);
+            updateUser(updated);
+          } else if (userData?.checkedIn) {
+            const updated = {
+              ...userData,
+              checkedIn: false,
+              checkInTime: null,
+              currentGym: null,
+            };
+            setUserData(updated);
+            updateUser(updated);
+          }
+        }
+      } catch (_) {}
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refresh, userData, updateUser]);
 
   useEffect(() => {
     setUserData(currentUser);
@@ -102,7 +143,12 @@ export default function HomeScreen() {
 
     // Block impossible states immediately (mirrors PrimaryButton disabled logic).
     if (!isCheckedIn) {
-      if (!isOpen) {
+      const status = (gymData?.status || '').toLowerCase();
+      if (status === 'maintenance') {
+        setMessage('Gym is currently under maintenance', 'error');
+        return;
+      }
+      if (status !== 'open') {
         setMessage('Gym is currently closed', 'error');
         return;
       }
@@ -150,7 +196,18 @@ export default function HomeScreen() {
     <View style={{ flex: 1 }}>
       <Header userData={userData} onLogout={logout} />
 
-      <ScreenWrapper padTop={false} padBottom={false}>
+      <ScreenWrapper
+        padTop={false}
+        padBottom={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+          />
+        }
+      >
         <View style={styles.welcome}>
           <Text style={styles.welcomeTitle}>Welcome back, {first} 👋</Text>
           <Text style={styles.welcomeSub}>

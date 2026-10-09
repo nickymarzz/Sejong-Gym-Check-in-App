@@ -18,6 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 export default function ScreenWrapper({
   children,
   scroll = true,
+  refreshControl,
   bg = theme.colors.bg,
   // Which safe insets to apply the full background color behind.
   // Default: let top/bottom insets receive the page background color.
@@ -41,6 +42,7 @@ export default function ScreenWrapper({
   const content = scroll ? (
     <ScrollView
       style={{ flex: 1 }}
+      refreshControl={refreshControl}
       contentContainerStyle={[
         styles.scrollContent,
         {

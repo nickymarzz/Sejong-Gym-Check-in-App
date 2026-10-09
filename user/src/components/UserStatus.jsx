@@ -3,9 +3,19 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../theme';
 
+function formatDateTime12h(timeStr) {
+  if (!timeStr) return '';
+  const d = new Date(timeStr);
+  if (isNaN(d.getTime())) return timeStr;
+  const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return `${datePart}, ${timePart}`;
+}
+
 export default function UserStatus({ userData }) {
   if (!userData) return null;
   const inGym = !!userData.checkedIn;
+  const outTime = userData.lastCheckOutAt || userData.lastCheckOutTime;
 
   return (
     <View style={styles.card}>
@@ -32,7 +42,9 @@ export default function UserStatus({ userData }) {
             {inGym ? 'Checked In' : 'Not Checked In'}
           </Text>
           {inGym && userData.checkInTime ? (
-            <Text style={styles.statusDetail}>Since {userData.checkInTime}</Text>
+            <Text style={styles.statusDetail}>Since {formatDateTime12h(userData.checkInTime)}</Text>
+          ) : outTime ? (
+            <Text style={styles.statusDetail}>Last check-out: {formatDateTime12h(outTime)}</Text>
           ) : null}
         </View>
       </View>

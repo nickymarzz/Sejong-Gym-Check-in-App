@@ -91,8 +91,16 @@ mongosh sejong_gym database/init_db.js
 
 ### 2. Seed Realistic Test Data
 
+**Option A (Using `mongosh` directly):**
+
 ```bash
 mongosh sejong_gym database/seed.js
+```
+
+**Option B (Using the project PowerShell runner via Laravel Artisan):**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\seed_db.ps1
 ```
 
 *Seeds:*

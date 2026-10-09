@@ -10,7 +10,9 @@ export default function PrimaryButton({
   loading,
 }) {
   const isCheckedIn = !!userData?.checkedIn;
-  const isOpen = gymData?.status === 'open';
+  const status = (gymData?.status || '').toLowerCase();
+  const isOpen = status === 'open';
+  const isMaintenance = status === 'maintenance';
   const isFull = gymData ? gymData.currentOccupancy >= gymData.capacity : false;
 
   const disabled =
@@ -21,7 +23,8 @@ export default function PrimaryButton({
     : [theme.colors.primary, theme.colors.primaryDark];
 
   let hint = '';
-  if (!isOpen && !isCheckedIn) hint = 'Gym is currently closed';
+  if (isMaintenance && !isCheckedIn) hint = 'Gym is currently under maintenance';
+  else if (!isOpen && !isCheckedIn) hint = 'Gym is currently closed';
   else if (isFull && !isCheckedIn) hint = 'Gym is at full capacity';
   else if (isCheckedIn) hint = 'Tap to end your session';
   else hint = 'Tap to start your gym session';

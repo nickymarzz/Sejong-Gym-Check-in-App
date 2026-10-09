@@ -276,6 +276,7 @@ class CheckInController extends Controller
                     'name' => $user->name,
                     'checkedIn' => false,
                     'checkInTime' => null,
+                    'lastCheckOutAt' => $activeSession->checkOutTime?->toIso8601String(),
                 ];
 
                 return response()->json([
