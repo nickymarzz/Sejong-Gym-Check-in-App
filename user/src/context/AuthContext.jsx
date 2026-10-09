@@ -1,5 +1,5 @@
 import React, { createContext, useState, useCallback, useMemo } from 'react';
-import { authService } from '../services/mock/authService';
+import { authService } from '../services';
 
 export const AuthContext = createContext(null);
 

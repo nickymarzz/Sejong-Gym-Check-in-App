@@ -12,6 +12,7 @@ import Header from '../components/Header';
 import { theme } from '../theme';
 import { initialCheckInHistory } from '../data/mockCheckInHistory';
 import { AuthContext } from '../context/AuthContext';
+import { checkInService } from '../services';
 
 function statusStyle(s) {
   switch (s) {
@@ -53,7 +54,13 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    await new Promise((res) => setTimeout(res, 300));
+    try {
+      const res = await checkInService.getHistory();
+      if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+        setItems(res.data);
+        return;
+      }
+    } catch (_) {}
     const filtered = initialCheckInHistory.filter(
       (r) => !currentUser?.userId || r.userId === currentUser.userId,
     );

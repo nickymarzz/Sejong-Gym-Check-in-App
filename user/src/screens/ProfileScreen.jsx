@@ -13,7 +13,7 @@ import Header from '../components/Header';
 import ToastAlert from '../components/ToastAlert';
 import { AuthContext } from '../context/AuthContext';
 import { theme } from '../theme';
-import { notificationService } from '../services/mock/notificationService';
+import { notificationService } from '../services';
 
 function iconFor(t) {
   switch (t) {

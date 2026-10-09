@@ -1,5 +1,6 @@
 <?php
-$BASE = 'http://127.0.0.1:8022';
+$port = $argv[1] ?? '8000';
+$BASE = "http://127.0.0.1:$port";
 
 function hit(string $method, string $path, array $headers = [], $body = null): array {
     global $BASE;

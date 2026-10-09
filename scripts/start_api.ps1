@@ -19,5 +19,5 @@ if (Test-Path $scanDir) {
 }
 Set-Location $backendRoot
 $port = if ($args.Count -gt 0 -and $args[0]) { [string]$args[0] } else { '8000' }
-Write-Host "Starting SGC API on http://127.0.0.1:$port (PHP=$phpBin)"
-& $phpBin artisan serve --host=127.0.0.1 --port=$port
+Write-Host "Starting SGC API on http://0.0.0.0:$port (PHP=$phpBin)"
+& $phpBin artisan serve --host=0.0.0.0 --port=$port

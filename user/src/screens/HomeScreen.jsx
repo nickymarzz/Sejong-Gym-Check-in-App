@@ -10,34 +10,18 @@ import PrimaryButton from '../components/PrimaryButton';
 import ToastAlert from '../components/ToastAlert';
 import DevPanel from '../components/DevPanel';
 import NfcScanScreen from './NfcScanScreen';
-import { gymService } from '../services/mock/gymService';
-import { checkInService } from '../services/mock/checkInService';
-import { notificationService } from '../services/mock/notificationService';
-import { delay } from '../services/mock/_utils';
+import { gymService, checkInService, notificationService } from '../services';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
 
 export default function HomeScreen() {
   const { currentUser, updateUser, logout } = useContext(AuthContext);
 
-  const [gymData, setGymData] = useState(null);
+  const { gymData, setGymData } = useLiveOccupancy('gym-001', 3500);
   const [userData, setUserData] = useState(currentUser);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
   const [nfcVisible, setNfcVisible] = useState(false);
   const [nfcMode, setNfcMode] = useState('in'); // 'in' | 'out'
-
-  useEffect(() => {
-    gymService.getGymStatus('gym-001')
-      .then(r => {
-        if (r.success) {
-          setGymData(r.data);
-        } else {
-          setToast({ message: r.message || 'Failed to load gym status', type: 'error' });
-        }
-      })
-      .catch(() => {
-        setToast({ message: 'Failed to load gym status — please refresh', type: 'error' });
-      });
-  }, []);
 
   useEffect(() => {
     setUserData(currentUser);
@@ -65,7 +49,7 @@ export default function HomeScreen() {
       }
     }
     setMessage(result.message, result.type || 'success');
-  }, [setMessage, updateUser]);
+  }, [setMessage, updateUser, setGymData]);
 
   const runCheckIn = useCallback(async (nfcPayload) => {
     setLoading(true);
