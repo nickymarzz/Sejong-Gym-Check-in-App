@@ -3,3 +3,4 @@ AGENTS.md
 .trae
 .rules
 pitching/
+scripts/start_api.sh
