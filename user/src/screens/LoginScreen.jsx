@@ -18,10 +18,12 @@ import { theme } from '../theme';
 
 export default function LoginScreen() {
   const { login, loading } = useContext(AuthContext);
+  const [loginMode, setLoginMode] = useState('student'); // 'student' | 'admin'
   const [studentId, setStudentId] = useState('20241234');
   const [password, setPassword] = useState('password');
   const [errorMsg, setErrorMsg] = useState('');
 
+  const isAdminMode = loginMode === 'admin';
   const canSubmit = studentId.length === 8 && password.length > 0 && !loading;
 
   const handleSubmit = async () => {
@@ -46,15 +48,40 @@ export default function LoginScreen() {
                 <MaterialCommunityIcons name="dumbbell" size={30} color="#fff" />
               </View>
               <Text style={styles.title}>Sejong Gym Check-in</Text>
-              <Text style={styles.subtitle}>Sign in with your student account</Text>
+              <Text style={styles.subtitle}>
+                {isAdminMode ? 'Sign in with your administrator account' : 'Sign in with your student account'}
+              </Text>
+            </View>
+
+            <View style={styles.modeToggle}>
+              <Pressable
+                onPress={() => setLoginMode('student')}
+                style={({ pressed }) => [
+                  styles.modeBtn,
+                  !isAdminMode && styles.modeBtnActive,
+                  pressed && { opacity: 0.85 },
+                ]}
+              >
+                <Text style={[styles.modeBtnText, !isAdminMode && styles.modeBtnTextActive]}>Student</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setLoginMode('admin')}
+                style={({ pressed }) => [
+                  styles.modeBtn,
+                  isAdminMode && styles.modeBtnActive,
+                  pressed && { opacity: 0.85 },
+                ]}
+              >
+                <Text style={[styles.modeBtnText, isAdminMode && styles.modeBtnTextActive]}>Administrator</Text>
+              </Pressable>
             </View>
 
             <View style={styles.form}>
               <View style={styles.group}>
-                <Text style={styles.label}>Student ID</Text>
+                <Text style={styles.label}>{isAdminMode ? 'Admin ID' : 'Student ID'}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. 20241234"
+                  placeholder={isAdminMode ? 'e.g. 00000001' : 'e.g. 20241234'}
                   placeholderTextColor={theme.colors.textMuted}
                   value={studentId}
                   maxLength={8}
@@ -106,8 +133,9 @@ export default function LoginScreen() {
 
             <View style={styles.noteBox}>
               <Text style={styles.note}>
-                Demo / Prototype — Any 8-digit student ID works. No real authentication yet;
-                backend will verify later.
+                {isAdminMode
+                  ? 'Administrator access is determined by your account role on the backend. Selecting this option does not grant admin access — the server verifies credentials and role.'
+                  : 'Demo / Prototype — Any 8-digit student ID works. No real authentication yet; backend will verify later.'}
               </Text>
             </View>
           </View>
@@ -159,6 +187,33 @@ const styles = StyleSheet.create({
   },
   form: { gap: 16 },
   group: { gap: 6 },
+  modeToggle: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.bg,
+    borderRadius: theme.radius.md,
+    padding: 4,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  modeBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: theme.radius.sm,
+  },
+  modeBtnActive: {
+    backgroundColor: theme.colors.primary,
+  },
+  modeBtnText: {
+    fontSize: 13,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.2,
+  },
+  modeBtnTextActive: {
+    color: '#fff',
+  },
   label: {
     fontSize: 12,
     fontWeight: theme.fontWeight.bold,

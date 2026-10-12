@@ -187,7 +187,16 @@ export default function ProfileScreen() {
             </Text>
           </View>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={styles.name}>{currentUser?.name || 'Demo Student'}</Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.name}>{currentUser?.name || 'Demo Student'}</Text>
+              {currentUser?.role ? (
+                <View style={[styles.roleBadge, currentUser.role === 'admin' ? styles.roleBadgeAdmin : styles.roleBadgeStudent]}>
+                  <Text style={[styles.roleBadgeText, currentUser.role === 'admin' ? styles.roleBadgeTextAdmin : styles.roleBadgeTextStudent]}>
+                    {currentUser.role.toUpperCase()}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             <Text style={styles.idLine}>ID: {currentUser?.studentId}</Text>
             <Text style={styles.dept}>{currentUser?.department || '—'}</Text>
           </View>
@@ -277,7 +286,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primaryLight,
   },
   avatarText: { fontSize: 18, fontWeight: '800', color: theme.colors.primary },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   name: { fontSize: 18, fontWeight: '800', color: theme.colors.text },
+  roleBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+  },
+  roleBadgeAdmin: { backgroundColor: theme.colors.devBg, borderColor: theme.colors.devBorder },
+  roleBadgeStudent: { backgroundColor: theme.colors.primaryLight, borderColor: '#c9def6' },
+  roleBadgeText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.4 },
+  roleBadgeTextAdmin: { color: theme.colors.dev },
+  roleBadgeTextStudent: { color: theme.colors.primaryDark },
   idLine: { fontSize: 12, color: theme.colors.textMuted, fontWeight: '600', letterSpacing: 0.3 },
   dept: { fontSize: 12, color: theme.colors.textSecondary, fontWeight: '500' },
 
