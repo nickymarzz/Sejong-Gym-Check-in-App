@@ -47,6 +47,8 @@ Route::get('/gyms/{gymId}', [GymController::class, 'show'])->name('gyms.show');
             Route::get('/gyms/{gymId}/weekly', [DashboardController::class, 'weeklySummary'])->name('dashboard.weeklySummary');
             Route::get('/gyms/{gymId}/active', [DashboardController::class, 'activeSessions'])->name('dashboard.activeSessions');
             Route::patch('/gyms/{gymId}/settings', [DashboardController::class, 'updateGym'])->name('dashboard.updateGym');
+            Route::post('/gyms/{gymId}/active/{userId}/checkout', [DashboardController::class, 'checkoutActiveStudent'])->name('dashboard.checkoutStudent');
+            Route::post('/gyms/{gymId}/checkout-all', [DashboardController::class, 'checkoutAllActiveStudents'])->name('dashboard.checkoutAll');
         });
 
 });

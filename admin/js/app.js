@@ -22,6 +22,7 @@
     logout: $('logout'),
     refresh: $('refresh'),
     footerApi: $('footer-api'),
+    backToApp: $('back-to-app'),
   };
 
   const timers = { live: null, summary: null };
@@ -167,6 +168,10 @@
   async function boot() {
     charts.init();
     el.apiBase.value = api.getApiBase();
+    if (el.backToApp) {
+      const host = window.location.hostname || 'localhost';
+      el.backToApp.href = `http://${host}:8081`;
+    }
 
     const res = await api.restoreSession();
     if (res.ok) {

@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Animated, Pressable, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../theme';
+
+const useNative = Platform.OS !== 'web';
 
 export default function ToastAlert({ message, type, onClear, duration = 4000 }) {
   const [visible, setVisible] = useState(!!message);
@@ -13,13 +15,13 @@ export default function ToastAlert({ message, type, onClear, duration = 4000 }) 
       Animated.timing(anim, {
         toValue: 1,
         duration: 280,
-        useNativeDriver: true,
+        useNativeDriver: useNative,
       }).start();
     } else {
       Animated.timing(anim, {
         toValue: 0,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: useNative,
       }).start(() => setVisible(false));
     }
   }, [message, anim]);

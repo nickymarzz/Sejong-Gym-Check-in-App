@@ -29,6 +29,24 @@ export default function CapacityCard({ gymData }) {
     }
 
     if (status === 'open') {
+      if (gymData.openingHours?.open && gymData.openingHours?.close) {
+        const now = new Date();
+        const curH = String(now.getHours()).padStart(2, '0');
+        const curM = String(now.getMinutes()).padStart(2, '0');
+        const curTime = `${curH}:${curM}`;
+        const { open, close } = gymData.openingHours;
+        const isWithin = open <= close
+          ? (curTime >= open && curTime < close)
+          : (curTime >= open || curTime < close);
+        if (!isWithin) {
+          return {
+            label: 'Closed',
+            pillStyle: styles.pillClosed,
+            textStyle: styles.textClosed,
+          };
+        }
+      }
+
       if (isFull) {
         return {
           label: 'Full',

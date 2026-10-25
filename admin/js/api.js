@@ -35,6 +35,19 @@
   }
 
   function getToken() {
+    try {
+      if (typeof window !== 'undefined' && window.location && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        const urlToken = params.get('token');
+        if (urlToken) {
+          const store = sessionStore();
+          if (store) store.setItem(cfg.STORAGE.TOKEN, urlToken);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return urlToken;
+        }
+      }
+    } catch (_) {}
+
     const store = sessionStore();
     return (store && store.getItem(cfg.STORAGE.TOKEN)) || memory.token;
   }
@@ -208,6 +221,18 @@
     });
   }
 
+  function checkoutStudent(gymId, userId) {
+    return request(`/dashboard/gyms/${encodeURIComponent(gymId)}/active/${encodeURIComponent(userId)}/checkout`, {
+      method: 'POST',
+    });
+  }
+
+  function checkoutAllStudents(gymId) {
+    return request(`/dashboard/gyms/${encodeURIComponent(gymId)}/checkout-all`, {
+      method: 'POST',
+    });
+  }
+
   SGC.api = {
     getApiBase,
     setApiBase,
@@ -221,5 +246,7 @@
     getWeeklySummary,
     getActiveSessions,
     updateGymSettings,
+    checkoutStudent,
+    checkoutAllStudents,
   };
 }(window.SGC));

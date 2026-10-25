@@ -13,9 +13,16 @@ export function AuthProvider({ children }) {
     try {
       const result = await authService.login(studentId, password);
       if (result.success && result.user) {
+        const isStaffOrAdmin = result.user.role === 'admin' || result.user.role === 'staff';
+        if (isStaffOrAdmin) {
+          return {
+            success: false,
+            message: 'This portal is for students only. Staff must access the Admin Dashboard at http://localhost:5500.',
+          };
+        }
         setCurrentUser(result.user);
         if (result.token) setToken(result.token);
-        return { success: true };
+        return { success: true, user: result.user, token: result.token };
       }
       return { success: false, message: result.message || 'Login failed' };
     } catch (err) {

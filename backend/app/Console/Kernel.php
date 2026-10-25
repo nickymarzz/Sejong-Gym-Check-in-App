@@ -10,6 +10,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('queue:restart')->hourly();
+        $schedule->command('sgc:auto-checkout gym-001')->dailyAt('22:00');
     }
 
     protected function commands(): void

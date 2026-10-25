@@ -55,9 +55,12 @@ class CheckInController extends Controller
 
                 if (!$gym->isOpen()) {
                     $session->abortTransaction();
+                    $msg = ($gym->status !== 'open')
+                        ? 'Gym is currently ' . $gym->status . '.'
+                        : 'Gym is currently closed. Operating hours are ' . $gym->getOperatingHoursString() . '.';
                     return response()->json([
                         'status' => 'error',
-                        'message' => 'Gym is currently ' . $gym->status . '.'
+                        'message' => $msg
                     ], 409);
                 }
 
@@ -74,11 +77,24 @@ class CheckInController extends Controller
                     ->first();
 
                 if ($activeSession) {
-                    $session->abortTransaction();
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Already checked in. Please check out first.'
-                    ], 409);
+                    $sessionTime = \Carbon\Carbon::parse($activeSession->checkInTime, 'Asia/Seoul');
+                    $nowSeoul = now('Asia/Seoul');
+                    $isDifferentDay = $sessionTime->format('Y-m-d') !== $nowSeoul->format('Y-m-d');
+                    $isStale = $isDifferentDay || $sessionTime->diffInHours($nowSeoul) >= 16;
+
+                    if ($isStale) {
+                        // Auto-heal: Close stale session from past day so student is not stuck
+                        $closeTimeStr = $gym->openingHours['close'] ?? '22:00';
+                        $closedAt = $sessionTime->copy()->setTimeFromTimeString($closeTimeStr);
+                        $activeSession->autoExpire($closedAt);
+                        $gym->decrementOccupancy();
+                    } else {
+                        $session->abortTransaction();
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Already checked in. Please check out first.'
+                        ], 409);
+                    }
                 }
 
                 $now = now();

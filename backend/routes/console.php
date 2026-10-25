@@ -248,3 +248,38 @@ Artisan::command('sgc:seed', function () {
     $this->line("  Login demo student: 20241234 / password");
     $this->line("  Login admin:        00000001 / password");
 })->purpose('(Re)initialize SGC schema + indexes + seed data into MongoDB (idempotent, drops collections first)');
+
+Artisan::command('sgc:auto-checkout {gymId=gym-001}', function ($gymId) {
+    $gym = \App\Models\Gym::where('gymId', $gymId)->first();
+    if (!$gym) {
+        $this->error("Gym {$gymId} not found.");
+        return 1;
+    }
+
+    $activeCheckIns = \App\Models\CheckIn::where('gymId', $gymId)
+        ->where('status', \App\Models\CheckIn::STATUS_ACTIVE)
+        ->get();
+
+    $count = $activeCheckIns->count();
+    $this->info("Closing active sessions for {$gym->gymName} ({$count} active students found)...");
+
+    $closeTimeStr = $gym->openingHours['close'] ?? '22:00';
+    $now = now('Asia/Seoul');
+    $closingTime = $now->copy()->setTimeFromTimeString($closeTimeStr);
+    $outTime = $now->greaterThan($closingTime) ? $closingTime : $now;
+
+    foreach ($activeCheckIns as $checkIn) {
+        $checkIn->autoExpire($outTime);
+        \App\Models\User::where('userId', $checkIn->userId)->update([
+            'checkedIn' => false,
+            'checkInTime' => null,
+        ]);
+    }
+
+    $gym->currentOccupancy = 0;
+    $gym->save();
+
+    $this->info("✓ Successfully checked out {$count} students. Occupancy reset to 0.");
+    return 0;
+})->purpose('Auto-checkout all active students when gym operating hours end');
+

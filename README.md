@@ -288,6 +288,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\setup_new_php.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\seed_db.ps1
 ```
 
+More details on the collections, `$jsonSchema` validation, and indexes are in [`database/README.md`](database/README.md).
+
 #### Start the API / queue workers / E2E tests
 
 ```powershell
@@ -302,7 +304,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start_workers.ps1 analytics
 powershell -ExecutionPolicy Bypass -File .\scripts\run_tests_e2e.ps1
 ```
 
-The API server binds to `http://0.0.0.0:8000` (via `.\scripts\start_api.ps1`) to allow incoming requests from mobile phones running Expo Go on the local Wi-Fi. The mobile client (`user/src/config.js`) dynamically resolves the computer's LAN IP address from `Constants.expoConfig.hostUri`, allowing seamless testing without manual IP configuration.
+The API server binds to `http://0.0.0.0:8000` (via `.\scripts\start_api.ps1`) to allow incoming requests from mobile phones running Expo Go on the local Wi-Fi. The mobile client (`user/src/config.js`) dynamically resolves the computer's LAN IP address from `Constants.expoConfig.hostUri`, allowing seamless testing without manual IP configuration. More details on the architecture, auto-checkout scheduler, and API routes are in [`backend/README.md`](backend/README.md).
 
 ### 5. Run the Admin Dashboard
 
@@ -379,7 +381,6 @@ The mobile client is designed with strict separation between UI screens and back
 - `PATCH /api/dashboard/gyms/{gymId}/settings` — Body: any of `capacity` (1–500, not below the current occupancy), `status` (`open` | `closed` | `maintenance`) and `openingHours` (`{ open, close }` as `HH:MM`, close after open). Returns the updated gym.
 
 > All `/api/dashboard/*` routes require a JWT whose user has the `admin` or `staff` role (`401` without a token, `403` for students).
-
 > **Error handling:** unknown routes return a `404` fallback with the same envelope. A duplicate active check-in returns `409`; a check-out without a prior check-in returns `409`.
 
 ---

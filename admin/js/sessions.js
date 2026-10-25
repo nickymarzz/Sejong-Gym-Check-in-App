@@ -33,6 +33,28 @@
     setText(el.empty, message);
   }
 
+  function actionCell(session) {
+    const btn = element('button', 'btn btn-ghost', 'Check out');
+    btn.style.padding = '2px 8px';
+    btn.style.fontSize = '12px';
+    btn.style.minHeight = '28px';
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Checking out…';
+      const identifier = session.userId || session.studentId || session.checkInId;
+      const res = await api.checkoutStudent(cfg.GYM_ID, identifier);
+      if (!res.ok) {
+        alert(res.message || 'Checkout failed');
+        btn.disabled = false;
+        btn.textContent = 'Check out';
+        return;
+      }
+      tick();
+      if (SGC.live && SGC.live.tick) SGC.live.tick();
+    });
+    return btn;
+  }
+
   function render() {
     if (!supported) {
       setText(el.count, '');
@@ -57,6 +79,7 @@
       { label: 'Student', value: personCell },
       { label: 'Checked in', value: (s) => fmt.time(s.checkInTime) },
       { label: 'Time inside', numeric: true, value: (s) => fmt.duration(s.minutesInside) },
+      { label: 'Action', value: actionCell },
     ], rows);
   }
 

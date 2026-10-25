@@ -93,6 +93,18 @@ class CheckIn extends Model
         $this->save();
     }
 
+    public function autoExpire(\DateTimeInterface $time = null): void
+    {
+        $out = $time ? \Carbon\Carbon::parse($time, 'Asia/Seoul') : now('Asia/Seoul');
+        $this->checkOutTime = $out;
+        if ($this->checkInTime) {
+            $diffSeconds = abs($out->diffInSeconds($this->checkInTime));
+            $this->durationMinutes = max(1, (int) ceil($diffSeconds / 60));
+        }
+        $this->status = self::STATUS_AUTO_EXPIRED;
+        $this->save();
+    }
+
     /**
      * @param \MongoDB\Laravel\Eloquent\Builder<static> $query
      * @param string $date

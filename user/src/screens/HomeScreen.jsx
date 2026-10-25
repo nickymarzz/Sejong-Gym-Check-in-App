@@ -152,6 +152,20 @@ export default function HomeScreen() {
         setMessage('Gym is currently closed', 'error');
         return;
       }
+      if (gymData?.openingHours?.open && gymData?.openingHours?.close) {
+        const now = new Date();
+        const curH = String(now.getHours()).padStart(2, '0');
+        const curM = String(now.getMinutes()).padStart(2, '0');
+        const curTime = `${curH}:${curM}`;
+        const { open, close } = gymData.openingHours;
+        const isWithin = open <= close
+          ? (curTime >= open && curTime < close)
+          : (curTime >= open || curTime < close);
+        if (!isWithin) {
+          setMessage(`Gym is currently closed. Operating hours are ${open} — ${close}.`, 'error');
+          return;
+        }
+      }
       if (isFull) {
         setMessage('Gym is at full capacity', 'error');
         return;

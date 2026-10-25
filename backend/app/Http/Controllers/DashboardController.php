@@ -81,6 +81,7 @@ class DashboardController extends Controller
 
             return [
                 'checkInId' => (string) $session->_id,
+                'userId' => $session->userId,
                 'studentId' => $session->studentId,
                 'name' => $student?->name,
                 'department' => $student?->department,
@@ -140,6 +141,73 @@ class DashboardController extends Controller
                 'status' => $gym->status,
                 'nfcTagIdentifier' => $gym->nfcTagIdentifier,
                 'openingHours' => $gym->openingHours,
+            ]
+        ], 200);
+    }
+
+    public function checkoutActiveStudent(string $gymId, string $identifier): JsonResponse
+    {
+        $gym = Gym::where('gymId', $gymId)->first();
+        if (!$gym) {
+            return response()->json(['status' => 'error', 'message' => 'Gym not found.'], 404);
+        }
+
+        $checkIn = CheckIn::where('gymId', $gymId)
+            ->where(function ($q) use ($identifier) {
+                $q->where('userId', $identifier)
+                  ->orWhere('studentId', $identifier)
+                  ->orWhere('_id', $identifier);
+            })
+            ->where('status', CheckIn::STATUS_ACTIVE)
+            ->first();
+
+        if (!$checkIn) {
+            return response()->json(['status' => 'error', 'message' => 'No active session found for this student.'], 404);
+        }
+
+        $checkIn->checkOut();
+        $gym->decrementOccupancy();
+
+        User::where('userId', $checkIn->userId)->update([
+            'checkedIn' => false,
+            'checkInTime' => null,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Student {$checkIn->studentId} checked out successfully.",
+            'data' => [
+                'currentOccupancy' => $gym->currentOccupancy,
+            ]
+        ], 200);
+    }
+
+    public function checkoutAllActiveStudents(string $gymId): JsonResponse
+    {
+        $gym = Gym::where('gymId', $gymId)->first();
+        if (!$gym) {
+            return response()->json(['status' => 'error', 'message' => 'Gym not found.'], 404);
+        }
+
+        $active = CheckIn::where('gymId', $gymId)->where('status', CheckIn::STATUS_ACTIVE)->get();
+        $count = $active->count();
+
+        foreach ($active as $checkIn) {
+            $checkIn->checkOut();
+            User::where('userId', $checkIn->userId)->update([
+                'checkedIn' => false,
+                'checkInTime' => null,
+            ]);
+        }
+
+        $gym->currentOccupancy = 0;
+        $gym->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "All {$count} active students checked out.",
+            'data' => [
+                'currentOccupancy' => 0,
             ]
         ], 200);
     }

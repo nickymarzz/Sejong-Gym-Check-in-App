@@ -6,6 +6,7 @@ import {
   Animated,
   Easing,
   Pressable,
+  Platform,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -68,19 +69,21 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
       }
     });
 
+    const useNative = Platform.OS !== 'web';
+
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 900,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: useNative,
         }),
         Animated.timing(pulseAnim, {
           toValue: 0.4,
           duration: 900,
           easing: Easing.in(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: useNative,
         }),
       ]),
     ).start();
@@ -88,7 +91,7 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 350,
-      useNativeDriver: true,
+      useNativeDriver: useNative,
     }).start();
 
     return () => {

@@ -73,11 +73,12 @@ if ($jwt) {
     printLine('GET /api/auth/me (Bearer JWT)', $s, $b);
 
     // 6. Check-in (should be valid first tap)
-    [$s, $b] = hit('POST', '/api/checkins', [$authHeader], ['gymId' => 'gym-001', 'nfcPayload' => 'SGC-GYM']);
+    $testHeaders = [$authHeader, 'X-Bypass-Hours: true'];
+    [$s, $b] = hit('POST', '/api/checkins', $testHeaders, ['gymId' => 'gym-001', 'nfcPayload' => 'SGC-GYM']);
     printLine('POST /api/checkins (first tap)', $s, $b);
 
     // 7. Double tap (should 409 via E11000 partial unique)
-    [$s2, $b2] = hit('POST', '/api/checkins', [$authHeader], ['gymId' => 'gym-001', 'nfcPayload' => 'SGC-GYM']);
+    [$s2, $b2] = hit('POST', '/api/checkins', $testHeaders, ['gymId' => 'gym-001', 'nfcPayload' => 'SGC-GYM']);
     printLine('POST /api/checkins (double tap — expect 409)', $s2, $b2);
 
     // 8. Check out

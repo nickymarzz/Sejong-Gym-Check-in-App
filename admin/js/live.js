@@ -33,8 +33,19 @@
     subscribers.push(fn);
   }
 
+  function isWithinHours(hours) {
+    if (!hours || !hours.open || !hours.close) return true;
+    const now = new Date();
+    const curTime = now.toLocaleTimeString('en-GB', { timeZone: cfg.TIMEZONE || 'Asia/Seoul', hour12: false, hour: '2-digit', minute: '2-digit' });
+    const { open, close } = hours;
+    return open <= close ? (curTime >= open && curTime < close) : (curTime >= open || curTime < close);
+  }
+
   function effectiveStatus(gym) {
-    if (gym.status === 'open' && Number(gym.currentOccupancy) >= Number(gym.capacity)) return 'full';
+    if (gym.status === 'open') {
+      if (!isWithinHours(gym.openingHours)) return 'closed';
+      if (Number(gym.currentOccupancy) >= Number(gym.capacity)) return 'full';
+    }
     return gym.status;
   }
 
