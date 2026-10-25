@@ -1,8 +1,8 @@
 # 🏋️‍♂️ Sejong Gym Check-in App (SGC)
 
-[![Expo SDK](https://img.shields.io/badge/Expo-SDK%2057-black?style=flat&logo=expo)](https://expo.dev/)
-[![React Native](https://img.shields.io/badge/React%20Native-0.86-61DAFB?style=flat&logo=react)](https://reactnative.dev/)
-[![React](https://img.shields.io/badge/React-19.2-blue?style=flat&logo=react)](https://react.dev/)
+[![Expo SDK](https://img.shields.io/badge/Expo-SDK%2058-black?style=flat&logo=expo)](https://expo.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.88-61DAFB?style=flat&logo=react)](https://reactnative.dev/)
+[![React](https://img.shields.io/badge/React-19.3-blue?style=flat&logo=react)](https://react.dev/)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20|%20Android%20|%20Web-success)](https://expo.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -98,11 +98,15 @@ sequenceDiagram
   - Student profile information (Name, Student ID, Department, Academic Year).
   - Activity statistics: weekly session counter, total logged hours, and workout streak.
   - Notification center for capacity alerts and gym announcements.
+- **⏰ Operating Hours & Auto-Checkout Enforcement**:
+  - Automatically enforces facility operating hours (06:00 — 22:00 KST), blocking check-ins outside active hours with clear user feedback.
+  - Scheduled nightly auto-checkout (`php artisan sgc:auto-checkout`) at 22:00 auto-expires remaining sessions and resets occupancy.
+  - Auto-heals stale sessions from previous days upon subsequent check-in.
 - **🖥️ Admin Dashboard (`/admin`)**:
-  - Staff sign-in restricted to the `admin` and `staff` roles.
-  - Live occupancy with the list of students currently inside (searchable by name or student ID).
-  - Daily and 7-day analytics with Chart.js: visits, unique students, peak occupancy, peak hour and average workout length.
-  - Gym settings: staff can change the capacity, the status (`open`, `closed`, `maintenance`) and the opening hours.
+  - Dedicated portal on port 5500 restricted to `admin` and `staff` roles.
+  - Live occupancy and "Inside now" student list with time inside and manual "Check out" actions (individual and bulk checkout).
+  - Daily and 7-day analytics with Chart.js: visits, unique students, peak occupancy, peak hour, and average workout length.
+  - Gym settings: staff can update capacity, operating status (`open`, `closed`, `maintenance`), and opening hours.
 
 ---
 
@@ -112,7 +116,7 @@ sequenceDiagram
 
 | Technology | Description |
 | --- | --- |
-| **Framework** | [React Native](https://reactnative.dev/) (v0.86.3) with [Expo](https://expo.dev/) (SDK 57) |
+| **Framework** | [React Native](https://reactnative.dev/) (v0.88.0) with [Expo](https://expo.dev/) (SDK 58) |
 | **Language** | Modern JavaScript (ES6+ / JSX) |
 | **Navigation** | [React Navigation 7](https://reactnavigation.org/) (Native Stack & Bottom Tabs) |
 | **UI & Icons** | Vanilla React Native StyleSheet, `@expo/vector-icons` (Ionicons, MaterialCommunityIcons) |
@@ -149,11 +153,14 @@ Sejong-Gym-Check-in-App/
 ├── LICENSE
 ├── README.md
 ├── admin/                            # Admin Dashboard (static HTML / CSS / JS + Chart.js)
+│   ├── README.md                     # Admin Dashboard module guide (Lead: Javo)
 │   ├── index.html                    # Sign-in and dashboard views
 │   ├── css/styles.css                # Design tokens, light / dark theme, layout
 │   └── js/                           # api, live, sessions, settings, weekly, daily, charts, app
 ├── backend/                          # Laravel 11 REST API (MongoDB + Redis)
+│   ├── README.md                     # Backend API module guide (Lead: Nik)
 │   ├── app/
+│   │   ├── Console/Commands/         # SeedDatabaseCommand, AutoCheckoutCommand
 │   │   ├── Http/
 │   │   │   ├── Controllers/          # Auth, CheckIn, Gym, Notification, Dashboard
 │   │   │   ├── Middleware/           # EnsureStaffRole (admin / staff gate for /api/dashboard)
@@ -163,10 +170,14 @@ Sejong-Gym-Check-in-App/
 │   │   └── Models/                   # User, Gym, CheckIn, DailySummary, Notification
 │   ├── routes/
 │   │   ├── api.php                   # REST endpoints (see API Contract)
-│   │   └── console.php               # sgc:seed and scheduled tasks
+│   │   └── console.php               # sgc:seed and scheduled auto-checkout
 │   ├── php-conf.d/sgc-extensions.ini # Project-local PHP extension overrides
 │   ├── composer / composer.json      # Composer LTS phar + dependency manifest
 │   └── storage/app/e2e_test.php      # End-to-end HTTP contract test
+├── database/                         # MongoDB Schema, Initialization & Seeds
+│   ├── README.md                     # Database layer & security guide (Lead: Zafri)
+│   ├── init_db.js                    # Schema validation rules & index creation
+│   └── seed.js                       # Standalone MongoDB seeder
 ├── scripts/                          # Windows PowerShell runners (non-XAMPP PHP 8.5)
 │   ├── setup_new_php.ps1             # One-time: install ext-mongodb, wire extensions
 │   ├── seed_db.ps1                   # Deterministic dataset seed (sgc:seed)
@@ -377,11 +388,13 @@ The mobile client is designed with strict separation between UI screens and back
 
 - `GET /api/dashboard/gyms/{gymId}/summary/{date}` — Daily occupancy summary for a gym.
 - `GET /api/dashboard/gyms/{gymId}/weekly` — Weekly occupancy summary for a gym.
-- `GET /api/dashboard/gyms/{gymId}/active` — Students currently checked in (`checkInId`, `studentId`, `name`, `department`, `checkInTime`, `minutesInside`), oldest first.
+- `GET /api/dashboard/gyms/{gymId}/active` — Students currently checked in (`checkInId`, `userId`, `studentId`, `name`, `department`, `checkInTime`, `minutesInside`), oldest first.
 - `PATCH /api/dashboard/gyms/{gymId}/settings` — Body: any of `capacity` (1–500, not below the current occupancy), `status` (`open` | `closed` | `maintenance`) and `openingHours` (`{ open, close }` as `HH:MM`, close after open). Returns the updated gym.
+- `POST /api/dashboard/gyms/{gymId}/active/{userId}/checkout` — Staff force checkout for an individual active student.
+- `POST /api/dashboard/gyms/{gymId}/checkout-all` — Staff force checkout for all active students (resets gym occupancy to 0).
 
 > All `/api/dashboard/*` routes require a JWT whose user has the `admin` or `staff` role (`401` without a token, `403` for students).
-> **Error handling:** unknown routes return a `404` fallback with the same envelope. A duplicate active check-in returns `409`; a check-out without a prior check-in returns `409`.
+> **Error handling:** unknown routes return a `404` fallback with the same envelope. A duplicate active check-in returns `409`; a check-in outside operating hours (06:00 — 22:00) returns `409`; a check-out without a prior check-in returns `409`.
 
 ---
 
@@ -398,9 +411,11 @@ The mobile client is designed with strict separation between UI screens and back
 - [x] Mobile & Backend Live Integration: connected to Laravel REST API with dynamic Wi-Fi IP discovery.
 - [x] Real-time facility capacity auto-polling hook (`useLiveOccupancy`) with app lifecycle/background detection.
 - [x] Pull-to-refresh gesture support across Home, History, and Profile screens.
+- [x] Facility operating hours enforcement (06:00 — 22:00 KST) with scheduled closing auto-checkout (`sgc:auto-checkout`).
+- [x] Admin web dashboard with live occupancy, Chart.js metrics, settings controls, and manual checkout actions.
+- [x] Upgraded mobile client to Expo SDK 58, React 19.3, and React Native 0.88.
 - [ ] Connect production native NFC reading via `react-native-nfc-manager` (Expo Dev Client / physical stickers).
 - [ ] Real-time WebSocket or Server-Sent Events (SSE) for instantaneous occupancy updates across all student devices.
-- [x] Administrator web dashboard for gym staff to monitor capacity, review daily / weekly analytics and override gym limits.
 
 ---
 
