@@ -107,4 +107,29 @@ if ($adminJwt) {
 
     [$s, $b] = hit('GET', '/api/dashboard/gyms/gym-001/weekly', ["Authorization: Bearer $adminJwt"]);
     printLine('GET /api/dashboard/gyms/gym-001/weekly', $s, $b);
+
+    $adminAuth = "Authorization: Bearer $adminJwt";
+
+    [$s, $b] = hit('GET', '/api/dashboard/gyms/gym-001/active', [$adminAuth]);
+    printLine('GET /api/dashboard/gyms/gym-001/active', $s, $b);
+
+    [$s, $b] = hit('PATCH', '/api/dashboard/gyms/gym-001/settings', [$adminAuth], ['capacity' => 60]);
+    printLine('PATCH /api/dashboard/gyms/gym-001/settings (capacity 60)', $s, $b);
+
+    [$s, $b] = hit('PATCH', '/api/dashboard/gyms/gym-001/settings', [$adminAuth], ['capacity' => 1]);
+    printLine('PATCH /api/dashboard/gyms/gym-001/settings (capacity below occupancy — expect 422)', $s, $b);
+
+    [$s, $b] = hit('PATCH', '/api/dashboard/gyms/gym-001/settings', [$adminAuth], ['status' => 'bogus']);
+    printLine('PATCH /api/dashboard/gyms/gym-001/settings (invalid status — expect 422)', $s, $b);
+
+    [$s, $b] = hit('PATCH', '/api/dashboard/gyms/gym-001/settings', [$adminAuth], ['capacity' => 50]);
+    printLine('PATCH /api/dashboard/gyms/gym-001/settings (restore capacity 50)', $s, $b);
+}
+
+if ($jwt) {
+    [$s, $b] = hit('PATCH', '/api/dashboard/gyms/gym-001/settings', [$authHeader], ['capacity' => 10]);
+    printLine('PATCH /api/dashboard/gyms/gym-001/settings (student token — expect 403)', $s, $b);
+
+    [$s, $b] = hit('GET', '/api/dashboard/gyms/gym-001/active', [$authHeader]);
+    printLine('GET /api/dashboard/gyms/gym-001/active (student token — expect 403)', $s, $b);
 }
