@@ -98,6 +98,11 @@ sequenceDiagram
   - Student profile information (Name, Student ID, Department, Academic Year).
   - Activity statistics: weekly session counter, total logged hours, and workout streak.
   - Notification center for capacity alerts and gym announcements.
+- **🖥️ Admin Dashboard (`/admin`)**:
+  - Staff sign-in restricted to the `admin` and `staff` roles.
+  - Live occupancy with the list of students currently inside (searchable by name or student ID).
+  - Daily and 7-day analytics with Chart.js: visits, unique students, peak occupancy, peak hour and average workout length.
+  - Gym settings: staff can change the capacity, the status (`open`, `closed`, `maintenance`) and the opening hours.
 
 ---
 
@@ -113,6 +118,15 @@ sequenceDiagram
 | **UI & Icons** | Vanilla React Native StyleSheet, `@expo/vector-icons` (Ionicons, MaterialCommunityIcons) |
 | **Effects & Layout** | `expo-linear-gradient`, `react-native-safe-area-context`, `react-native-screens` |
 | **Web Support** | `react-native-web` for browser preview and cross-platform testing |
+
+### Admin Dashboard (`/admin`)
+
+| Technology | Description |
+| --- | --- |
+| **Framework** | Vanilla JavaScript (ES2018, no build step) served as static files |
+| **Charts** | [Chart.js](https://www.chartjs.org/) 4.4 (loaded from cdnjs with a pinned version and integrity hash) |
+| **Styling** | Plain CSS with custom properties, automatic light / dark theme |
+| **Auth** | Bearer JWT from `POST /api/auth/login`, kept in `sessionStorage`, `admin` / `staff` roles only |
 
 ### Backend & Infrastructure (`/backend`, Implemented)
 
@@ -134,11 +148,16 @@ sequenceDiagram
 Sejong-Gym-Check-in-App/
 ├── LICENSE
 ├── README.md
+├── admin/                            # Admin Dashboard (static HTML / CSS / JS + Chart.js)
+│   ├── index.html                    # Sign-in and dashboard views
+│   ├── css/styles.css                # Design tokens, light / dark theme, layout
+│   └── js/                           # api, live, sessions, settings, weekly, daily, charts, app
 ├── backend/                          # Laravel 11 REST API (MongoDB + Redis)
 │   ├── app/
 │   │   ├── Http/
 │   │   │   ├── Controllers/          # Auth, CheckIn, Gym, Notification, Dashboard
-│   │   │   ├── Requests/             # Login / CheckIn / CheckOut request validation
+│   │   │   ├── Middleware/           # EnsureStaffRole (admin / staff gate for /api/dashboard)
+│   │   │   ├── Requests/             # Login / CheckIn / CheckOut / UpdateGym request validation
 │   │   │   └── ...
 │   │   ├── Jobs/                     # SendFcmNotificationJob, UpdateDailySummaryJob
 │   │   └── Models/                   # User, Gym, CheckIn, DailySummary, Notification
@@ -153,7 +172,8 @@ Sejong-Gym-Check-in-App/
 │   ├── seed_db.ps1                   # Deterministic dataset seed (sgc:seed)
 │   ├── start_api.ps1                 # Boot API dev server (artisan serve)
 │   ├── start_workers.ps1             # Run Redis queue workers (notifications/analytics)
-│   └── run_tests_e2e.ps1             # Execute the E2E HTTP contract test
+│   ├── run_tests_e2e.ps1             # Execute the E2E HTTP contract test
+│   └── start_admin.ps1               # Serve the admin dashboard (default port 5500)
 └── user/                             # Student Mobile Application (Expo / React Native)
     ├── App.jsx                       # Root component with AuthProvider & AppNavigator
     ├── app.json                      # Expo application manifest & bundle configuration
@@ -284,6 +304,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run_tests_e2e.ps1
 
 The API server binds to `http://0.0.0.0:8000` (via `.\scripts\start_api.ps1`) to allow incoming requests from mobile phones running Expo Go on the local Wi-Fi. The mobile client (`user/src/config.js`) dynamically resolves the computer's LAN IP address from `Constants.expoConfig.hostUri`, allowing seamless testing without manual IP configuration.
 
+### 5. Run the Admin Dashboard
+
+The dashboard is a static web app, so it only needs a web server and the API from step 4:
+
+```powershell
+# Serves ./admin on http://localhost:5500 (pass a port as an argument to change it).
+powershell -ExecutionPolicy Bypass -File .\scripts\start_admin.ps1
+```
+
+Open `http://localhost:5500` and sign in with the admin credentials from the next section. The dashboard expects the API on port 8000 of the same host; use **Server settings** on the sign-in screen to point it elsewhere. More details are in [`admin/README.md`](admin/README.md).
+
 ---
 
 ## 🔑 Demo Credentials & Testing
@@ -296,7 +327,7 @@ The app is pre-configured with demo student credentials for immediate evaluation
 | **Password** | `password` (any non-empty string) |
 | **Student Name** | Demo Student |
 | **Department** | Department of Computer Engineering |
-| **Admin ID** | `00000001` (backend only, for admin dashboard endpoints) |
+| **Admin ID** | `00000001` (Admin Dashboard and `/api/dashboard/*` endpoints) |
 | **Admin Password** | `password` |
 
 ### How to Test Check-in / Check-out
@@ -344,6 +375,10 @@ The mobile client is designed with strict separation between UI screens and back
 
 - `GET /api/dashboard/gyms/{gymId}/summary/{date}` — Daily occupancy summary for a gym.
 - `GET /api/dashboard/gyms/{gymId}/weekly` — Weekly occupancy summary for a gym.
+- `GET /api/dashboard/gyms/{gymId}/active` — Students currently checked in (`checkInId`, `studentId`, `name`, `department`, `checkInTime`, `minutesInside`), oldest first.
+- `PATCH /api/dashboard/gyms/{gymId}/settings` — Body: any of `capacity` (1–500, not below the current occupancy), `status` (`open` | `closed` | `maintenance`) and `openingHours` (`{ open, close }` as `HH:MM`, close after open). Returns the updated gym.
+
+> All `/api/dashboard/*` routes require a JWT whose user has the `admin` or `staff` role (`401` without a token, `403` for students).
 
 > **Error handling:** unknown routes return a `404` fallback with the same envelope. A duplicate active check-in returns `409`; a check-out without a prior check-in returns `409`.
 
@@ -364,7 +399,7 @@ The mobile client is designed with strict separation between UI screens and back
 - [x] Pull-to-refresh gesture support across Home, History, and Profile screens.
 - [ ] Connect production native NFC reading via `react-native-nfc-manager` (Expo Dev Client / physical stickers).
 - [ ] Real-time WebSocket or Server-Sent Events (SSE) for instantaneous occupancy updates across all student devices.
-- [ ] Administrator web dashboard for gym staff to monitor capacity and override limits.
+- [x] Administrator web dashboard for gym staff to monitor capacity, review daily / weekly analytics and override gym limits.
 
 ---
 

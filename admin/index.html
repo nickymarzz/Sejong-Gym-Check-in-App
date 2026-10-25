@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>SGC Admin Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <noscript>
+    <p class="banner">The SGC Admin Dashboard needs JavaScript enabled.</p>
+  </noscript>
+
+  <section id="login-view" class="login" hidden>
+    <form id="login-form" class="card login-card" novalidate>
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <div>
+          <h1 class="brand-title">Sejong Gym Admin</h1>
+          <p class="muted">Sign in with your administrator account</p>
+        </div>
+      </div>
+
+      <label class="field">
+        <span>Admin ID</span>
+        <input id="login-id" name="adminId" inputmode="numeric" autocomplete="username"
+               maxlength="8" placeholder="8 digits" required>
+      </label>
+
+      <label class="field">
+        <span>Password</span>
+        <input id="login-password" name="password" type="password"
+               autocomplete="current-password" required>
+      </label>
+
+      <p id="login-message" class="form-message" role="alert" hidden></p>
+
+      <button id="login-submit" class="btn btn-primary" type="submit">Sign in</button>
+
+      <details id="server-settings" class="server-settings">
+        <summary>Server settings</summary>
+        <label class="field">
+          <span>API base URL</span>
+          <input id="api-base" type="url" spellcheck="false" autocomplete="off">
+        </label>
+        <div class="row">
+          <button id="api-save" class="btn btn-ghost" type="button">Save</button>
+          <button id="api-reset" class="btn btn-ghost" type="button">Reset to default</button>
+        </div>
+      </details>
+    </form>
+  </section>
+
+  <div id="dashboard-view" hidden>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span class="brand-title">Sejong Gym Admin</span>
+        </div>
+        <div class="topbar-right">
+          <span id="conn" class="conn" data-state="connecting">
+            <span class="conn-dot" aria-hidden="true"></span>
+            <span id="conn-text">Connecting…</span>
+          </span>
+          <span class="user">
+            <span id="user-name" class="user-name"></span>
+            <span id="user-role" class="role-badge"></span>
+          </span>
+          <button id="logout" class="btn btn-ghost" type="button">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <p id="banner" class="banner" role="alert" hidden></p>
+
+      <section id="live" class="card live" aria-labelledby="live-title">
+        <div class="live-head">
+          <div>
+            <h2 id="live-title" class="gym-name">Gymnasium</h2>
+            <p id="gym-location" class="muted"></p>
+          </div>
+          <span id="gym-status" class="badge" data-status="unknown">
+            <span class="badge-icon" aria-hidden="true">·</span>
+            <span id="gym-status-text">—</span>
+          </span>
+        </div>
+
+        <div class="live-body">
+          <p class="hero">
+            <span id="occ-current" class="hero-number">—</span>
+            <span class="hero-unit">/ <span id="occ-capacity">—</span> people inside</span>
+          </p>
+          <div class="meter-wrap">
+            <div id="meter" class="meter" role="progressbar" aria-label="Gym occupancy"
+                 aria-valuemin="0" aria-valuemax="100">
+              <div id="meter-fill" class="meter-fill"></div>
+            </div>
+            <p class="meter-meta">
+              <span><span id="occ-percent">—</span> full</span>
+              <span>Open hours <span id="gym-hours">—</span></span>
+            </p>
+          </div>
+        </div>
+
+        <p class="live-foot muted">
+          Updated <time id="live-updated">—</time> · refreshes automatically
+        </p>
+      </section>
+
+      <div class="two-col">
+        <section class="card panel" aria-labelledby="inside-title">
+          <div class="panel-head">
+            <h2 id="inside-title">Inside now <span id="inside-count" class="count"></span></h2>
+            <input id="inside-filter" type="search" placeholder="Filter by name or ID"
+                   aria-label="Filter the people inside" autocomplete="off">
+          </div>
+          <div id="inside-table" class="table-wrap table-scroll"></div>
+          <p id="inside-empty" class="empty" hidden></p>
+        </section>
+
+        <section class="card panel" aria-labelledby="settings-title">
+          <div class="panel-head">
+            <h2 id="settings-title">Gym settings</h2>
+          </div>
+          <form id="settings-form" class="settings-form" novalidate>
+            <label class="field">
+              <span>Capacity</span>
+              <input id="settings-capacity" type="number" inputmode="numeric" min="1" max="500" step="1">
+            </label>
+            <label class="field">
+              <span>Status</span>
+              <select id="settings-status">
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+            </label>
+            <div class="field-pair">
+              <label class="field">
+                <span>Opens</span>
+                <input id="settings-open" type="time">
+              </label>
+              <label class="field">
+                <span>Closes</span>
+                <input id="settings-close" type="time">
+              </label>
+            </div>
+            <p id="settings-message" class="form-message" role="status" hidden></p>
+            <div class="row">
+              <button id="settings-save" class="btn btn-primary" type="submit">Save changes</button>
+              <button id="settings-reset" class="btn btn-ghost" type="button">Discard</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <section id="weekly-section" class="section" aria-labelledby="weekly-title">
+        <div class="section-head">
+          <h2 id="weekly-title">Last 7 days</h2>
+          <p class="muted">Select a day in the first chart to open it below.</p>
+        </div>
+
+        <div id="weekly-grid" class="chart-grid">
+          <article class="card chart-card chart-wide">
+            <header>
+              <h3>Visits and unique students</h3>
+              <p class="muted">Per day</p>
+            </header>
+            <div class="chart-box">
+              <canvas id="chart-week-visits" role="img" aria-label="Daily visits and unique students for the last 7 days"></canvas>
+            </div>
+          </article>
+
+          <article class="card chart-card">
+            <header>
+              <h3>Peak occupancy</h3>
+              <p class="muted">Most people inside at once, per day</p>
+            </header>
+            <div class="chart-box">
+              <canvas id="chart-week-peak" role="img" aria-label="Peak occupancy per day for the last 7 days"></canvas>
+            </div>
+          </article>
+
+          <article class="card chart-card">
+            <header>
+              <h3>Average workout length</h3>
+              <p class="muted">Minutes per visit, per day</p>
+            </header>
+            <div class="chart-box">
+              <canvas id="chart-week-duration" role="img" aria-label="Average workout length per day for the last 7 days"></canvas>
+            </div>
+          </article>
+        </div>
+
+        <p id="weekly-empty" class="card empty" hidden>No daily summaries for the last 7 days yet.</p>
+
+        <details class="table-view">
+          <summary>View weekly data as a table</summary>
+          <div id="table-week" class="table-wrap"></div>
+        </details>
+      </section>
+
+      <section id="daily-section" class="section" aria-labelledby="daily-title">
+        <div class="section-head">
+          <h2 id="daily-title">Day detail</h2>
+          <p id="day-label" class="muted"></p>
+        </div>
+
+        <div class="filters" role="group" aria-label="Choose a day">
+          <button id="day-prev" class="btn btn-ghost btn-icon" type="button" aria-label="Previous day">‹</button>
+          <input id="day-input" type="date" aria-label="Date">
+          <button id="day-next" class="btn btn-ghost btn-icon" type="button" aria-label="Next day">›</button>
+          <button id="day-today" class="btn btn-ghost" type="button">Today</button>
+          <button id="refresh" class="btn btn-ghost" type="button">Refresh</button>
+        </div>
+
+        <div id="daily-body">
+          <div class="tiles">
+            <div class="tile">
+              <p class="tile-label">Total visits</p>
+              <p id="tile-visits" class="tile-value">—</p>
+            </div>
+            <div class="tile">
+              <p class="tile-label">Unique students</p>
+              <p id="tile-unique" class="tile-value">—</p>
+            </div>
+            <div class="tile">
+              <p class="tile-label">Peak occupancy</p>
+              <p class="tile-value"><span id="tile-peak">—</span> <span id="tile-peak-sub" class="tile-sub"></span></p>
+            </div>
+            <div class="tile">
+              <p class="tile-label">Peak hour</p>
+              <p id="tile-peak-hour" class="tile-value">—</p>
+            </div>
+            <div class="tile">
+              <p class="tile-label">Average workout</p>
+              <p id="tile-duration" class="tile-value">—</p>
+            </div>
+          </div>
+
+          <article id="daily-chart-card" class="card chart-card" hidden>
+            <header>
+              <h3>Activity by hour</h3>
+              <p class="muted">Check-ins started in each hour, and how many people were inside</p>
+            </header>
+            <div class="chart-box chart-box-tall">
+              <canvas id="chart-day-hourly" role="img" aria-label="Check-ins and occupancy by hour"></canvas>
+            </div>
+            <details class="table-view">
+              <summary>View hourly data as a table</summary>
+              <div id="table-day" class="table-wrap"></div>
+            </details>
+          </article>
+
+          <p id="daily-empty" class="card empty" hidden></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="shell footer muted">
+      API: <span id="footer-api"></span>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+          integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="js/config.js"></script>
+  <script src="js/format.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/dom.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/live.js"></script>
+  <script src="js/sessions.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/weekly.js"></script>
+  <script src="js/daily.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
