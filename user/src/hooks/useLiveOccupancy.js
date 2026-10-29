@@ -29,7 +29,9 @@ export function useLiveOccupancy(gymId = CONFIG.GYM_ID || 'gym-001', intervalMs 
               prev &&
               prev.currentOccupancy === res.data.currentOccupancy &&
               prev.status === res.data.status &&
-              prev.capacity === res.data.capacity
+              prev.capacity === res.data.capacity &&
+              prev.openingHours?.open === res.data.openingHours?.open &&
+              prev.openingHours?.close === res.data.openingHours?.close
             ) {
               return prev;
             }
