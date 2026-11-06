@@ -46,7 +46,7 @@ export async function apiRequest(endpoint, { method = 'GET', body = null, header
   }
 
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeoutId = controller ? setTimeout(() => controller.abort(), 7000) : null;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), 12000) : null;
   if (controller) {
     options.signal = controller.signal;
   }
