@@ -5,3 +5,4 @@ AGENTS.md
 pitching/
 scripts/start_api.sh
 scripts/start_admin.sh
+.agents

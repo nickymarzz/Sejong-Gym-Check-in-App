@@ -15,6 +15,12 @@
     "plugins": [
       "expo-status-bar",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c4be757d-d0bf-4fe5-b761-d4e0c43393e3"
+      }
+    },
+    "owner": "se-project"
   }
 }
