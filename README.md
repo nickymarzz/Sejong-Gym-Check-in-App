@@ -414,8 +414,8 @@ The mobile client is designed with strict separation between UI screens and back
 - [x] Facility operating hours enforcement (06:00 — 22:00 KST) with scheduled closing auto-checkout (`sgc:auto-checkout`).
 - [x] Admin web dashboard with live occupancy, Chart.js metrics, settings controls, and manual checkout actions.
 - [x] Upgraded mobile client to Expo SDK 58, React 19.3, and React Native 0.88.
-- [ ] Connect production native NFC reading via `react-native-nfc-manager` (Expo Dev Client / physical stickers).
-- [ ] Real-time WebSocket or Server-Sent Events (SSE) for instantaneous occupancy updates across all student devices.
+- [x] Connect production native NFC reading via `react-native-nfc-manager` (Expo Dev Client / physical stickers).
+- [x] Real-time Server-Sent Events (SSE) for instantaneous occupancy updates across all student devices.
 
 ---
 

@@ -12,6 +12,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh'])->name('auth.refresh');
 });
 
+Route::get('/gym/status/stream', [GymController::class, 'stream'])->name('gym.status.stream.default');
+Route::get('/gym/status/{gymId}/stream', [GymController::class, 'stream'])->name('gym.status.stream');
 Route::get('/gym/status', [GymController::class, 'status'])->name('gym.status');
 Route::get('/gym/status/{gymId}', [GymController::class, 'status'])->name('gym.status.id');
 Route::get('/gyms', [GymController::class, 'index'])->name('gyms.index');
