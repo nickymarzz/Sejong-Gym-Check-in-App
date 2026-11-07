@@ -6,12 +6,23 @@ use App\Http\Controllers\CheckInController;
 use App\Http\Controllers\GymController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserController;
 
-Route::prefix('auth')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Public Routes & Capacity Inquiries (Proposal Section 6 / FR-1)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('auth')->middleware('throttle:30,1')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
+    Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
     Route::post('/refresh', [AuthController::class, 'refresh'])->name('auth.refresh');
 });
 
+// Capacity endpoints (Proposal explicit specification & existing frontend paths)
+Route::get('/capacity', [GymController::class, 'status'])->name('capacity.default');
+Route::get('/capacity/{gymId}', [GymController::class, 'status'])->name('capacity.id');
 Route::get('/gym/status/stream', [GymController::class, 'stream'])->name('gym.status.stream.default');
 Route::get('/gym/status/{gymId}/stream', [GymController::class, 'stream'])->name('gym.status.stream');
 Route::get('/gym/status', [GymController::class, 'status'])->name('gym.status');
@@ -19,39 +30,52 @@ Route::get('/gym/status/{gymId}', [GymController::class, 'status'])->name('gym.s
 Route::get('/gyms', [GymController::class, 'index'])->name('gyms.index');
 Route::get('/gyms/{gymId}', [GymController::class, 'show'])->name('gyms.show');
 
-    Route::middleware(['jwt.auth'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes (JWT / Laravel Sanctum Bearer)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['jwt.auth'])->group(function () {
 
-        Route::prefix('auth')->group(function () {
-            Route::get('/me', [AuthController::class, 'me'])->name('auth.me');
-            Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
-        });
+    Route::prefix('auth')->group(function () {
+        Route::get('/me', [AuthController::class, 'me'])->name('auth.me');
+        Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+    });
 
-        Route::prefix('checkins')->group(function () {
-            Route::post('/', [CheckInController::class, 'store'])->name('checkins.store');
-            Route::post('/checkout', [CheckInController::class, 'checkOut'])->name('checkins.checkout');
-            Route::get('/history', [CheckInController::class, 'history'])->name('checkins.history');
-            Route::get('/active', [CheckInController::class, 'active'])->name('checkins.active');
-        });
+    // User management & profile (Proposal Section 6 /api/users)
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('users.index');
+        Route::get('/profile', [UserController::class, 'profile'])->name('users.profile');
+        Route::patch('/profile', [UserController::class, 'updateProfile'])->name('users.updateProfile');
+        Route::get('/{userId}', [UserController::class, 'show'])->name('users.show');
+    });
 
-        Route::prefix('checkouts')->group(function () {
-            Route::post('/', [CheckInController::class, 'checkOut'])->name('checkouts.store');
-        });
+    Route::prefix('checkins')->middleware('throttle:60,1')->group(function () {
+        Route::post('/', [CheckInController::class, 'store'])->name('checkins.store');
+        Route::post('/checkout', [CheckInController::class, 'checkOut'])->name('checkins.checkout');
+        Route::get('/history', [CheckInController::class, 'history'])->name('checkins.history');
+        Route::get('/active', [CheckInController::class, 'active'])->name('checkins.active');
+    });
 
-        Route::prefix('notifications')->group(function () {
-            Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
-            Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
-            Route::post('/{notificationId}/read', [NotificationController::class, 'markRead'])->name('notifications.markRead');
-            Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
-        });
+    Route::prefix('checkouts')->middleware('throttle:60,1')->group(function () {
+        Route::post('/', [CheckInController::class, 'checkOut'])->name('checkouts.store');
+    });
 
-        Route::prefix('dashboard')->middleware('role.staff')->group(function () {
-            Route::get('/gyms/{gymId}/summary/{date}', [DashboardController::class, 'dailySummary'])->name('dashboard.dailySummary');
-            Route::get('/gyms/{gymId}/weekly', [DashboardController::class, 'weeklySummary'])->name('dashboard.weeklySummary');
-            Route::get('/gyms/{gymId}/active', [DashboardController::class, 'activeSessions'])->name('dashboard.activeSessions');
-            Route::patch('/gyms/{gymId}/settings', [DashboardController::class, 'updateGym'])->name('dashboard.updateGym');
-            Route::post('/gyms/{gymId}/active/{userId}/checkout', [DashboardController::class, 'checkoutActiveStudent'])->name('dashboard.checkoutStudent');
-            Route::post('/gyms/{gymId}/checkout-all', [DashboardController::class, 'checkoutAllActiveStudents'])->name('dashboard.checkoutAll');
-        });
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
+        Route::post('/{notificationId}/read', [NotificationController::class, 'markRead'])->name('notifications.markRead');
+        Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
+    });
+
+    Route::prefix('dashboard')->middleware('role.staff')->group(function () {
+        Route::get('/gyms/{gymId}/summary/{date}', [DashboardController::class, 'dailySummary'])->name('dashboard.dailySummary');
+        Route::get('/gyms/{gymId}/weekly', [DashboardController::class, 'weeklySummary'])->name('dashboard.weeklySummary');
+        Route::get('/gyms/{gymId}/active', [DashboardController::class, 'activeSessions'])->name('dashboard.activeSessions');
+        Route::patch('/gyms/{gymId}/settings', [DashboardController::class, 'updateGym'])->name('dashboard.updateGym');
+        Route::post('/gyms/{gymId}/active/{userId}/checkout', [DashboardController::class, 'checkoutActiveStudent'])->name('dashboard.checkoutStudent');
+        Route::post('/gyms/{gymId}/checkout-all', [DashboardController::class, 'checkoutAllActiveStudents'])->name('dashboard.checkoutAll');
+    });
 
 });
 

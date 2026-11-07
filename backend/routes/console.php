@@ -283,3 +283,46 @@ Artisan::command('sgc:auto-checkout {gymId=gym-001}', function ($gymId) {
     return 0;
 })->purpose('Auto-checkout all active students when gym operating hours end');
 
+Artisan::command('sgc:send-reminders {gymId=gym-001}', function ($gymId) {
+    $gym = \App\Models\Gym::where('gymId', $gymId)->first();
+    if (!$gym) {
+        $this->error("Gym {$gymId} not found.");
+        return 1;
+    }
+
+    $activeCheckIns = \App\Models\CheckIn::where('gymId', $gymId)
+        ->where('status', \App\Models\CheckIn::STATUS_ACTIVE)
+        ->get();
+
+    $count = $activeCheckIns->count();
+    $this->info("Sending closing reminders for {$gym->gymName} ({$count} active students found)...");
+
+    $closeTimeStr = $gym->openingHours['close'] ?? '22:00';
+    $now = now();
+
+    foreach ($activeCheckIns as $checkIn) {
+        $user = \App\Models\User::where('userId', $checkIn->userId)->first();
+        if ($user) {
+            $notification = \App\Models\Notification::create([
+                'userId' => $user->userId,
+                'studentId' => $user->studentId,
+                'title' => 'Gym Closing Reminder',
+                'body' => "Reminder: {$gym->gymName} closes at {$closeTimeStr}. Please prepare to conclude your workout.",
+                'type' => \App\Models\Notification::TYPE_CAPACITY,
+                'data' => [
+                    'gymId' => $gym->gymId,
+                    'closeTime' => $closeTimeStr,
+                ],
+                'read' => false,
+                'sentAt' => $now,
+            ]);
+
+            \App\Jobs\SendFcmNotificationJob::dispatch($notification, $user);
+        }
+    }
+
+    $this->info("✓ Dispatched {$count} closing reminders to the Redis queue.");
+    return 0;
+})->purpose('Send closing reminders to active gym occupants via Redis queue & FCM');
+
+

@@ -3,13 +3,66 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $existing = User::where('studentId', $validated['studentId'])
+            ->orWhere('email', $validated['email'])
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'A user with this student ID or email already exists.'
+            ], 422);
+        }
+
+        $user = User::create([
+            'userId' => 'student-' . $validated['studentId'],
+            'studentId' => $validated['studentId'],
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'passwordHash' => Hash::make($validated['password']),
+            'role' => 'student',
+            'department' => $validated['department'] ?? 'General',
+            'year' => (int) ($validated['year'] ?? 1),
+            'checkedIn' => false,
+            'checkInTime' => null,
+            'fcmToken' => null,
+        ]);
+
+        $token = JWTAuth::fromUser($user);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Registration successful.',
+            'data' => [
+                'token' => $token,
+                'user' => [
+                    'userId' => $user->userId,
+                    'studentId' => $user->studentId,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'department' => $user->department,
+                    'year' => $user->year,
+                    'checkedIn' => $user->checkedIn,
+                    'checkInTime' => null,
+                ]
+            ]
+        ], 201);
+    }
+
     public function login(LoginRequest $request): JsonResponse
     {
         $validated = $request->validated();
