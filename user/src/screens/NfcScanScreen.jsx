@@ -30,7 +30,7 @@ import { delay } from '../services/mock/_utils';
 // sends the payload + user to checkInService which mimics Laravel.
 export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
   const [phase, setPhase] = useState('scanning'); // scanning | detected | invalid | timeout
-  const [msg, setMsg] = useState('Hold your phone against the SGC-GYM sticker…');
+  const [msg, setMsg] = useState('Hold your phone against the sticker…');
   const [payload, setPayload] = useState(null);
   const [tagTech, setTagTech] = useState(null);
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
@@ -45,7 +45,7 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
         setPhase('detected');
         setPayload(result.payload);
         setTagTech(result.tagTech || null);
-        setMsg('SGC-GYM sticker detected ✓');
+        setMsg('Sticker detected ✓');
         delay(900).then(() => {
           if (!mounted.current) return;
           onComplete && onComplete({ success: true, payload: result.payload });
@@ -125,7 +125,6 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
 
         <View style={styles.labelArea}>
           <Text style={styles.modeLabel}>{label}</Text>
-          <Text style={styles.subLabel}>MOCK NFC · Simulated phone → sticker read</Text>
         </View>
 
         <View style={styles.radar}>
@@ -221,15 +220,6 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
               {tagTech ? <Text style={styles.payloadTech}>Tag type: {tagTech}</Text> : null}
             </View>
           ) : null}
-        </View>
-
-        <View style={[styles.footerHint, { bottom: 24 + insets.bottom }]}>
-          <Text style={styles.footerHintTitle}>Per architecture spec:</Text>
-          <Text style={styles.footerHintText}>
-            • Sticker stores only: "{EXPECTED_PAYLOAD}"{'\n'}
-            • No student ID, no capacity, no DB data on tag{'\n'}
-            • Student ID comes from logged-in auth token (JWT)
-          </Text>
         </View>
       </Animated.View>
     </SafeAreaView>
@@ -341,31 +331,5 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 11,
     fontWeight: '600',
-  },
-
-  footerHint: {
-    position: 'absolute',
-    left: 20,
-    right: 20,
-    bottom: 40,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-  },
-  footerHintTitle: {
-    color: '#cbd5e1',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    marginBottom: 4,
-  },
-  footerHintText: {
-    textAlign: 'left',
-    color: '#64748b',
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: '500',
   },
 });
