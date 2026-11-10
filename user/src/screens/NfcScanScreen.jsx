@@ -284,15 +284,6 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
             </Pressable>
           ) : null}
         </View>
-
-        <View style={[styles.footerHint, { bottom: 24 + insets.bottom }]}>
-          <Text style={styles.footerHintTitle}>Per architecture spec:</Text>
-          <Text style={styles.footerHintText}>
-            • Sticker stores only: "{EXPECTED_PAYLOAD}"{'\n'}
-            • No student ID, no capacity, no DB data on tag{'\n'}
-            • Student ID comes from logged-in auth token (JWT)
-          </Text>
-        </View>
       </Animated.View>
     </SafeAreaView>
   );
@@ -444,31 +435,5 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 11,
     fontWeight: '600',
-  },
-
-  footerHint: {
-    position: 'absolute',
-    left: 20,
-    right: 20,
-    bottom: 40,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-  },
-  footerHintTitle: {
-    color: '#cbd5e1',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    marginBottom: 4,
-  },
-  footerHintText: {
-    textAlign: 'left',
-    color: '#64748b',
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: '500',
   },
 });

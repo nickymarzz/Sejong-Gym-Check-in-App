@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844" fill="none">
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+
+    <!-- dark screen background (modal presentation) -->
+    <rect width="390" height="844" fill="#2B3038"/>
+
+    <!-- status bar -->
+    <text x="28" y="28" font-size="13" font-weight="600" fill="#E2E8F0">9:41</text>
+    <rect x="301" y="17" width="3" height="6" rx="1" fill="#E2E8F0"/>
+    <rect x="306" y="15" width="3" height="8" rx="1" fill="#E2E8F0"/>
+    <rect x="311" y="13" width="3" height="10" rx="1" fill="#E2E8F0"/>
+    <rect x="316" y="11" width="3" height="12" rx="1" fill="#E2E8F0"/>
+    <path d="M330 17a10 10 0 0 1 14 0" stroke="#E2E8F0" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <circle cx="337" cy="22" r="1.8" fill="#E2E8F0"/>
+    <rect x="352" y="13" width="22" height="11" rx="3" stroke="#E2E8F0" stroke-width="1.5" fill="none"/>
+    <rect x="354" y="15" width="14" height="7" rx="1.5" fill="#E2E8F0"/>
+    <rect x="375" y="16" width="2" height="5" rx="1" fill="#E2E8F0"/>
+
+    <!-- cancel pill -->
+    <rect x="274" y="53" width="96" height="36" rx="18" fill="#343A43" stroke="#3D444D"/>
+    <path d="M288 64l14 14M302 64l-14 14" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
+    <text x="312" y="77" font-size="13" font-weight="600" fill="#CBD5E1">Cancel</text>
+
+    <!-- title -->
+    <text x="195" y="129" font-size="22" font-weight="800" fill="#FFFFFF" text-anchor="middle">Checking in with NFC sticker</text>
+
+    <!-- radar -->
+    <circle cx="195" cy="320" r="120" stroke="#4A5260" stroke-width="2" fill="none"/>
+    <circle cx="195" cy="320" r="100" stroke="#5A6270" stroke-width="2" fill="none"/>
+    <circle cx="195" cy="320" r="75" fill="#3C4453"/>
+    <circle cx="195" cy="320" r="8" fill="#FFFFFF"/>
+    <path d="M178 304a26 26 0 0 0 0 32" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M166 294a42 42 0 0 0 0 52" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+    <!-- status message -->
+    <text x="195" y="501" font-size="17" font-weight="700" fill="#E2E8F0" text-anchor="middle">Hold your phone against the sticker…</text>
+
+    <!-- home indicator -->
+    <rect x="130" y="832" width="130" height="5" rx="2.5" fill="#5A6270"/>
+  </g>
+</svg>
