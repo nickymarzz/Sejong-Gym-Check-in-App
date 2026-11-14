@@ -8,7 +8,6 @@ import CapacityCard from '../components/CapacityCard';
 import UserStatus from '../components/UserStatus';
 import PrimaryButton from '../components/PrimaryButton';
 import ToastAlert from '../components/ToastAlert';
-import DevPanel from '../components/DevPanel';
 import NfcScanScreen from './NfcScanScreen';
 import { gymService, checkInService, notificationService } from '../services';
 import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
@@ -191,19 +190,6 @@ export default function HomeScreen() {
     }
   }, [nfcMode, runCheckIn, runCheckOut, setMessage]);
 
-  const handleSimulateNfc = useCallback(async (scenario) => {
-    setLoading(true);
-    clearMessage();
-    try {
-      const r = await checkInService.simulateNfcScenario(scenario, gymData, userData);
-      applyResult(r);
-    } catch (e) {
-      setMessage('NFC simulation error', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [gymData, userData, clearMessage, applyResult, setMessage]);
-
   const first = useMemo(() => (userData?.name || '').split(' ')[0] || 'there', [userData]);
 
   return (
@@ -244,14 +230,6 @@ export default function HomeScreen() {
           onPress={handlePrimaryAction}
           loading={loading}
         />
-
-        <DevPanel onSimulateNfc={handleSimulateNfc} loading={loading} />
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            SGC · Sejong Gym Check-in System · MVP Prototype
-          </Text>
-        </View>
       </ScreenWrapper>
 
       <Modal visible={nfcVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNfcVisible(false)}>
@@ -276,16 +254,6 @@ const styles = StyleSheet.create({
   welcomeSub: {
     fontSize: 14,
     color: theme.colors.textSecondary,
-    fontWeight: theme.fontWeight.medium,
-  },
-  footer: {
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 12,
-    color: theme.colors.textMuted,
     fontWeight: theme.fontWeight.medium,
   },
 });

@@ -31,8 +31,6 @@ import { delay } from '../services/mock/_utils';
 export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
   const [phase, setPhase] = useState('scanning'); // scanning | detected | invalid | timeout
   const [msg, setMsg] = useState('Hold your phone against the sticker…');
-  const [payload, setPayload] = useState(null);
-  const [tagTech, setTagTech] = useState(null);
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const mounted = useRef(true);
@@ -43,8 +41,6 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
     nfcService.startScan((result) => {
       if (result.success && result.payload === EXPECTED_PAYLOAD) {
         setPhase('detected');
-        setPayload(result.payload);
-        setTagTech(result.tagTech || null);
         setMsg('Sticker detected ✓');
         delay(900).then(() => {
           if (!mounted.current) return;
@@ -52,8 +48,6 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
         });
       } else if (result.error === 'invalid_payload') {
         setPhase('invalid');
-        setPayload(result.payload);
-        setTagTech(result.tagTech || null);
         setMsg(result.message || 'Wrong NFC sticker');
         delay(1500).then(() => {
           if (!mounted.current) return;
@@ -171,7 +165,7 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
                   ? ['#5b3a0a', '#a86a0e']
                   : phase === 'detected'
                     ? ['#1e4d23', '#2f7d36']
-                    : ['#112446', '#1e56a0']
+                    : ['#7a0a1d', '#c30e2e']
             }
             style={styles.core}
             start={{ x: 0, y: 0 }}
@@ -201,25 +195,6 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
           >
             {msg}
           </Text>
-
-          {payload ? (
-            <View style={styles.payloadBlock}>
-              <Text style={styles.payloadLabel}>Sticker payload</Text>
-              <Text style={[styles.payloadValue, payload === EXPECTED_PAYLOAD ? { color: '#86efac' } : { color: '#fca5a5' }]}>
-                {payload}
-              </Text>
-              {payload === EXPECTED_PAYLOAD ? (
-                <Text style={styles.payloadHint}>
-                  ✓ Expected value — will be sent to Laravel with your auth token
-                </Text>
-              ) : (
-                <Text style={styles.payloadHint}>
-                  ✗ Expected "{EXPECTED_PAYLOAD}" — backend will reject this
-                </Text>
-              )}
-              {tagTech ? <Text style={styles.payloadTech}>Tag type: {tagTech}</Text> : null}
-            </View>
-          ) : null}
         </View>
       </Animated.View>
     </SafeAreaView>
@@ -292,44 +267,5 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
-  },
-  payloadBlock: {
-    marginTop: 18,
-    width: '100%',
-    maxWidth: 360,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-  },
-  payloadLabel: {
-    color: '#94a3b8',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  payloadValue: {
-    marginTop: 4,
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  payloadHint: {
-    marginTop: 8,
-    color: '#cbd5e1',
-    fontSize: 11,
-    textAlign: 'center',
-    fontWeight: '500',
-    lineHeight: 14,
-  },
-  payloadTech: {
-    marginTop: 6,
-    color: '#94a3b8',
-    fontSize: 11,
-    fontWeight: '600',
   },
 });

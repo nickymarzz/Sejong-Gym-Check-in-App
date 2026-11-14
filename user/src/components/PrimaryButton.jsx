@@ -31,7 +31,7 @@ export default function PrimaryButton({
 
   return (
     <View style={styles.wrap}>
-      <Pressable onPress={onPress} disabled={disabled} style={{ borderRadius: theme.radius.lg }}>
+      <Pressable onPress={onPress} disabled={disabled} style={styles.pressable}>
         <LinearGradient
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
@@ -56,6 +56,7 @@ export default function PrimaryButton({
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', marginBottom: theme.spacing.xxl },
+  pressable: { width: '100%', borderRadius: theme.radius.lg },
   btn: {
     width: '100%',
     minHeight: 64,
@@ -72,6 +73,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: theme.fontWeight.extrabold,
     letterSpacing: 1.5,
+    marginRight: -1.5,
+    textAlign: 'center',
   },
   hint: {
     marginTop: 12,

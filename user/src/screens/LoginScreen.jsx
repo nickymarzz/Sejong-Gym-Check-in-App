@@ -9,8 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenWrapper from '../components/ScreenWrapper';
 import { AuthContext } from '../context/AuthContext';
@@ -43,7 +43,11 @@ export default function LoginScreen() {
           <View style={styles.card}>
             <View style={styles.header}>
               <View style={styles.logo}>
-                <MaterialCommunityIcons name="dumbbell" size={30} color="#fff" />
+                <Image
+                  source={require('../../assets/logo.png')}
+                  style={styles.logoImg}
+                  resizeMode="contain"
+                />
               </View>
               <Text style={styles.title}>Sejong Gym Check-in</Text>
               <Text style={styles.subtitle}>Sign in with your student account</Text>
@@ -103,12 +107,6 @@ export default function LoginScreen() {
                 </LinearGradient>
               </Pressable>
             </View>
-
-            <View style={styles.noteBox}>
-              <Text style={styles.note}>
-                Demo / Prototype — Any 8-digit student ID works. Staff and gym administrators should access the Admin Dashboard at http://localhost:5500.
-              </Text>
-            </View>
           </View>
         </View>
       </ScreenWrapper>
@@ -144,6 +142,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
+  },
+  logoImg: {
+    width: 32,
+    height: 32,
   },
   title: {
     fontSize: 24,
@@ -197,20 +199,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: theme.fontWeight.extrabold,
     letterSpacing: 0.6,
-  },
-  noteBox: {
-    marginTop: 18,
-    padding: 12,
-    backgroundColor: theme.colors.primaryLight,
-    borderWidth: 1,
-    borderColor: '#c9def6',
-    borderRadius: theme.radius.sm,
-  },
-  note: {
-    fontSize: 12,
-    color: theme.colors.primaryDark,
-    fontWeight: theme.fontWeight.semibold,
-    textAlign: 'center',
-    lineHeight: 18,
   },
 });

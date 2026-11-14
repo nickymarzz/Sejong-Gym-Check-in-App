@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme';
 
 export default function Header({ userData, onLogout, title = 'SGC', subtitle = 'Sejong Gym Check-in' }) {
@@ -23,7 +23,11 @@ export default function Header({ userData, onLogout, title = 'SGC', subtitle = '
       <View style={styles.navbar}>
         <View style={styles.brand}>
           <View style={styles.logoIcon}>
-            <MaterialCommunityIcons name="dumbbell" size={22} color="#fff" />
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.logoImg}
+              resizeMode="contain"
+            />
           </View>
           <View>
             <Text style={styles.brandTitle}>{title}</Text>
@@ -79,6 +83,10 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  logoImg: {
+    width: 24,
+    height: 24,
   },
   brandTitle: {
     fontSize: 20,

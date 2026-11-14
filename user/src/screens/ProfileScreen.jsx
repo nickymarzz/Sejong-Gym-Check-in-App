@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   roleBadgeAdmin: { backgroundColor: theme.colors.devBg, borderColor: theme.colors.devBorder },
-  roleBadgeStudent: { backgroundColor: theme.colors.primaryLight, borderColor: '#c9def6' },
+  roleBadgeStudent: { backgroundColor: theme.colors.primaryLight, borderColor: '#f6bcc8' },
   roleBadgeText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.4 },
   roleBadgeTextAdmin: { color: theme.colors.dev },
   roleBadgeTextStudent: { color: theme.colors.primaryDark },

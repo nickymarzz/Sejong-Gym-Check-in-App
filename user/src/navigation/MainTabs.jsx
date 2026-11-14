@@ -11,28 +11,22 @@ import { View, StyleSheet, Text } from 'react-native';
 const Tab = createBottomTabNavigator();
 
 function TabIcon({ route, color, size, focused }) {
+  let icon = null;
   if (route.name === 'Home') {
-    return (
-      <View style={focused ? styles.activeTabIconBg : null}>
-        <MaterialCommunityIcons name="home-outline" size={size} color={color} />
-      </View>
-    );
+    icon = <MaterialCommunityIcons name="home-outline" size={size} color={color} />;
+  } else if (route.name === 'History') {
+    icon = <Ionicons name="time-outline" size={size} color={color} />;
+  } else if (route.name === 'Profile') {
+    icon = <Ionicons name="person-outline" size={size} color={color} />;
   }
-  if (route.name === 'History') {
-    return (
-      <View style={focused ? styles.activeTabIconBg : null}>
-        <Ionicons name="time-outline" size={size} color={color} />
-      </View>
-    );
-  }
-  if (route.name === 'Profile') {
-    return (
-      <View style={focused ? styles.activeTabIconBg : null}>
-        <Ionicons name="person-outline" size={size} color={color} />
-      </View>
-    );
-  }
-  return null;
+  if (!icon) return null;
+  // The wrapper padding is applied at all times so the icon never re-lays-out
+  // when the active pill appears — only the background colour changes.
+  return (
+    <View style={[styles.tabIconWrap, focused && styles.tabIconWrapActive]}>
+      {icon}
+    </View>
+  );
 }
 
 export default function MainTabs() {
@@ -77,6 +71,9 @@ export default function MainTabs() {
         tabBarIconStyle: {
           marginTop: 0,
           marginBottom: 0,
+          // React Navigation wraps the icon in a fixed-size box (24x24 on
+          // Android). Widen it so the focused pill isn't clipped.
+          width: 44,
         },
         tabBarLabel: ({ focused, color }) => {
           const label =
@@ -103,10 +100,12 @@ export default function MainTabs() {
 
 const styles = StyleSheet.create({
   tabLabel: { fontSize: 10.5, letterSpacing: 0.2 },
-  activeTabIconBg: {
-    backgroundColor: theme.colors.primaryLight,
+  tabIconWrap: {
     paddingHorizontal: 9,
     paddingVertical: 2,
     borderRadius: 10,
+  },
+  tabIconWrapActive: {
+    backgroundColor: theme.colors.primaryLight,
   },
 });
