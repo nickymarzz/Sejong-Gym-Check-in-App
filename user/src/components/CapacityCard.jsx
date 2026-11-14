@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../theme';
 
-export default function CapacityCard({ gymData }) {
+export default function CapacityCard({ gymData, isLive = false }) {
   if (!gymData) return null;
   const pct =
     gymData.capacity > 0
@@ -74,7 +74,15 @@ export default function CapacityCard({ gymData }) {
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Current Gym Capacity</Text>
+        <View style={styles.titleWithLive}>
+          <Text style={styles.cardTitle}>Current Gym Capacity</Text>
+          {isLive ? (
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>LIVE</Text>
+            </View>
+          ) : null}
+        </View>
         <View style={[styles.statusPill, badge.pillStyle]}>
           <Text style={[styles.pillText, badge.textStyle]}>
             {badge.label}
@@ -141,6 +149,34 @@ const styles = StyleSheet.create({
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.textSecondary,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  titleWithLive: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: 'rgba(34, 197, 94, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#22c55e',
+  },
+  liveText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#22c55e',
     letterSpacing: 0.5,
   },
   statusPill: {

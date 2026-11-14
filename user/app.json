@@ -7,14 +7,27 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "kr.ac.sejong.sgc"
+      "bundleIdentifier": "kr.ac.sejong.sgc",
+      "infoPlist": {
+        "NFCReaderUsageDescription": "Allows scanning SGC-GYM NFC stickers for gym check-in"
+      }
     },
     "android": {
-      "package": "kr.ac.sejong.sgc"
+      "package": "kr.ac.sejong.sgc",
+      "permissions": [
+        "android.permission.NFC"
+      ]
     },
     "plugins": [
       "expo-status-bar",
-      "expo-font"
-    ]
+      "expo-font",
+      "react-native-nfc-manager"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c4be757d-d0bf-4fe5-b761-d4e0c43393e3"
+      }
+    },
+    "owner": "se-project"
   }
 }

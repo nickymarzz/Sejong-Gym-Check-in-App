@@ -15,7 +15,7 @@ import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
 export default function HomeScreen() {
   const { currentUser, updateUser, logout } = useContext(AuthContext);
 
-  const { gymData, setGymData, refresh } = useLiveOccupancy('gym-001', 3500);
+  const { gymData, setGymData, refresh, isLiveSse } = useLiveOccupancy('gym-001', 3500);
   const [userData, setUserData] = useState(currentUser);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -221,7 +221,7 @@ export default function HomeScreen() {
           onClear={clearMessage}
         />
 
-        <CapacityCard gymData={gymData} />
+        <CapacityCard gymData={gymData} isLive={isLiveSse} />
         <UserStatus userData={userData} />
 
         <PrimaryButton
