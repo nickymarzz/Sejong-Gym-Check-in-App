@@ -29,16 +29,11 @@ import { delay } from '../services/mock/_utils';
 // This screen reads the sticker payload via production native NFC (react-native-nfc-manager).
 // Then the caller (HomeScreen) sends the payload to Laravel checkInService.
 export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
-<<<<<<< HEAD
-  const [phase, setPhase] = useState('scanning'); // scanning | detected | invalid | timeout
-  const [msg, setMsg] = useState('Hold your phone against the sticker…');
-=======
   const [phase, setPhase] = useState('scanning'); // scanning | detected | invalid | timeout | disabled
   const [msg, setMsg] = useState('Hold your phone against the SGC-GYM sticker…');
   const [payload, setPayload] = useState(null);
   const [tagTech, setTagTech] = useState(null);
   const [isHardware, setIsHardware] = useState(true);
->>>>>>> 7e0d682853eaaefc2996f96a47f575fcf527d1bd
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const mounted = useRef(true);
@@ -91,34 +86,7 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
 
   useEffect(() => {
     mounted.current = true;
-<<<<<<< HEAD
-    nfcService.startScan((result) => {
-      if (result.success && result.payload === EXPECTED_PAYLOAD) {
-        setPhase('detected');
-        setMsg('Sticker detected ✓');
-        delay(900).then(() => {
-          if (!mounted.current) return;
-          onComplete && onComplete({ success: true, payload: result.payload });
-        });
-      } else if (result.error === 'invalid_payload') {
-        setPhase('invalid');
-        setMsg(result.message || 'Wrong NFC sticker');
-        delay(1500).then(() => {
-          if (!mounted.current) return;
-          onComplete && onComplete({ success: false, message: result.message });
-        });
-      } else {
-        setPhase('timeout');
-        setMsg(result.message || 'No NFC sticker detected');
-        delay(1500).then(() => {
-          if (!mounted.current) return;
-          onComplete && onComplete({ success: false, message: result.message });
-        });
-      }
-    });
-=======
     initiateScan();
->>>>>>> 7e0d682853eaaefc2996f96a47f575fcf527d1bd
 
     const useNative = Platform.OS !== 'web';
 
@@ -261,8 +229,6 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
           >
             {msg}
           </Text>
-<<<<<<< HEAD
-=======
 
           {phase === 'disabled' ? (
             <View style={styles.actionRow}>
@@ -317,7 +283,6 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
               <Text style={styles.devSimText}>Simulate SGC-GYM Tap</Text>
             </Pressable>
           ) : null}
->>>>>>> 7e0d682853eaaefc2996f96a47f575fcf527d1bd
         </View>
       </Animated.View>
     </SafeAreaView>
@@ -391,8 +356,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-<<<<<<< HEAD
-=======
   actionRow: {
     flexDirection: 'row',
     gap: 10,
@@ -473,5 +436,4 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
->>>>>>> 7e0d682853eaaefc2996f96a47f575fcf527d1bd
 });
