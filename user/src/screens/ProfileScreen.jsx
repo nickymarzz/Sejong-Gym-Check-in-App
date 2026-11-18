@@ -15,6 +15,7 @@ import ToastAlert from '../components/ToastAlert';
 import { AuthContext } from '../context/AuthContext';
 import { theme } from '../theme';
 import { notificationService, checkInService } from '../services';
+import { showLocalNotification } from '../services/notifications/pushNotificationService';
 import { initialCheckInHistory } from '../data/mockCheckInHistory';
 
 function iconFor(t) {
@@ -159,6 +160,18 @@ export default function ProfileScreen() {
     load();
   };
 
+  const handleTestNotification = async () => {
+    const success = await showLocalNotification(
+      'Sejong Gym Alert',
+      '🔔 Welcome to Sejong Gym! Tap here to see capacity and your active session.'
+    );
+    if (success) {
+      setToast({ message: 'Notification sent to phone tray!', type: 'success' });
+    } else {
+      setToast({ message: 'Could not send notification. Check permissions.', type: 'error' });
+    }
+  };
+
   const stats = [
     { label: 'This week', value: statsData.weeklySessions, icon: 'calendar-week', color: theme.colors.primary },
     { label: 'Total hours', value: statsData.totalHours, icon: 'clock-outline', color: theme.colors.success },
@@ -216,9 +229,14 @@ export default function ProfileScreen() {
 
         <View style={styles.notifHeader}>
           <Text style={styles.notifTitle}>Notifications</Text>
-          <Pressable onPress={markAllRead} style={({ p }) => [styles.markAll, p && { opacity: 0.7 }]}>
-            <Text style={styles.markAllText}>Mark all read</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={handleTestNotification} style={({ pressed }) => [styles.markAll, pressed && { opacity: 0.7 }]}>
+              <Text style={styles.markAllText}>Test Tray</Text>
+            </Pressable>
+            <Pressable onPress={markAllRead} style={({ pressed }) => [styles.markAll, pressed && { opacity: 0.7 }]}>
+              <Text style={styles.markAllText}>Mark all read</Text>
+            </Pressable>
+          </View>
         </View>
 
         <ToastAlert message={toast.message} type={toast.type} onClear={() => setToast({ message: '', type: '' })} />

@@ -15,13 +15,21 @@
     "android": {
       "package": "kr.ac.sejong.sgc",
       "permissions": [
-        "android.permission.NFC"
+        "android.permission.NFC",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "plugins": [
       "expo-status-bar",
       "expo-font",
-      "react-native-nfc-manager"
+      "react-native-nfc-manager",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#C41230"
+        }
+      ]
     ],
     "extra": {
       "eas": {

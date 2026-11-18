@@ -1,5 +1,6 @@
 import React, { createContext, useState, useCallback, useMemo } from 'react';
 import { authService } from '../services';
+import { registerForPushNotificationsAsync, syncPushTokenToBackend } from '../services/notifications/pushNotificationService';
 
 export const AuthContext = createContext(null);
 
@@ -22,6 +23,14 @@ export function AuthProvider({ children }) {
         }
         setCurrentUser(result.user);
         if (result.token) setToken(result.token);
+
+        // Background register push token with backend
+        registerForPushNotificationsAsync().then((pushToken) => {
+          if (pushToken) {
+            syncPushTokenToBackend(pushToken);
+          }
+        }).catch(() => {});
+
         return { success: true, user: result.user, token: result.token };
       }
       return { success: false, message: result.message || 'Login failed' };

@@ -16,6 +16,7 @@ export const authService = CONFIG.USE_MOCK ? mockAuth : apiAuth;
 export const gymService = CONFIG.USE_MOCK ? mockGym : apiGym;
 export const checkInService = CONFIG.USE_MOCK ? mockCheckIn : apiCheckIn;
 export const notificationService = CONFIG.USE_MOCK ? mockNotification : apiNotification;
+export * as pushNotificationService from './notifications/pushNotificationService';
 
 export { EXPECTED_PAYLOAD } from './api/checkInService';
 export default {
