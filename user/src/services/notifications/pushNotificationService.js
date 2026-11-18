@@ -24,7 +24,7 @@ export async function registerForPushNotificationsAsync() {
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#C41230',
-        sound: 'default',
+        sound: true,
       });
     }
 
@@ -87,7 +87,7 @@ export async function showLocalNotification(title, body, data = {}) {
       content: {
         title: title || 'Sejong Gym',
         body: body || 'Notification test',
-        sound: 'default',
+        sound: true,
         data,
       },
       trigger: null, // immediate display in tray
