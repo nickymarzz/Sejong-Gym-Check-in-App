@@ -39,6 +39,15 @@
     btn.style.fontSize = '12px';
     btn.style.minHeight = '28px';
     btn.addEventListener('click', async () => {
+      const studentLabel = session.name || (session.studentId ? `Student ${session.studentId}` : 'this student');
+      const confirmed = await SGC.dom.confirmModal({
+        title: 'Check out student?',
+        message: `Are you sure you want to manually check out ${studentLabel} from the gym?`,
+        confirmText: 'Check out',
+        confirmTone: 'danger',
+      });
+      if (!confirmed) return;
+
       btn.disabled = true;
       btn.textContent = 'Checking out…';
       const identifier = session.userId || session.studentId || session.checkInId;

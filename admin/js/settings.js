@@ -71,13 +71,6 @@
     return changes;
   }
 
-  function confirmStatusChange(gym, next) {
-    if (gym.status !== 'open' || next === 'open') return true;
-    const inside = Number(gym.currentOccupancy) || 0;
-    const note = inside > 0 ? ` ${inside} ${inside === 1 ? 'person is' : 'people are'} still inside.` : '';
-    return window.confirm(`Setting the gym to ${next} stops new check-ins.${note} Continue?`);
-  }
-
   async function submit(event) {
     event.preventDefault();
     const gym = state.gym;
@@ -94,7 +87,25 @@
       setMessage('There are no changes to save.', 'info');
       return;
     }
-    if (changes.status && !confirmStatusChange(gym, changes.status)) return;
+
+    const summary = [];
+    if (changes.capacity !== undefined) summary.push(`• Capacity: ${changes.capacity}`);
+    if (changes.status !== undefined) summary.push(`• Status: ${changes.status}`);
+    if (changes.openingHours) summary.push(`• Hours: ${changes.openingHours.open} – ${changes.openingHours.close}`);
+
+    const inside = Number(gym.currentOccupancy) || 0;
+    let warning = '';
+    if (changes.status && changes.status !== 'open' && inside > 0) {
+      warning = `\n\n⚠️ Notice: Setting the gym to "${changes.status}" stops new check-ins while ${inside} ${inside === 1 ? 'person is' : 'people are'} inside.`;
+    }
+
+    const confirmed = await SGC.dom.confirmModal({
+      title: 'Save gym settings?',
+      message: `Apply the following updates to ${gym.gymName || 'Sejong Gym'}?\n\n${summary.join('\n')}${warning}`,
+      confirmText: 'Save changes',
+      confirmTone: 'primary',
+    });
+    if (!confirmed) return;
 
     el.save.disabled = true;
     setMessage('');
@@ -113,7 +124,16 @@
     setMessage('Settings saved.', 'success');
   }
 
-  function discard() {
+  async function discard() {
+    if (dirty) {
+      const confirmed = await SGC.dom.confirmModal({
+        title: 'Discard unsaved changes?',
+        message: 'You have modified settings that have not been saved yet. Are you sure you want to discard your changes?',
+        confirmText: 'Discard changes',
+        confirmTone: 'danger',
+      });
+      if (!confirmed) return;
+    }
     dirty = false;
     if (state.gym) fill(state.gym);
     setMessage('');

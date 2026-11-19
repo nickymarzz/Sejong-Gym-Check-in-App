@@ -42,5 +42,65 @@
     container.appendChild(table);
   }
 
-  SGC.dom = { $, setText, setLoading, element, fillTable };
+  function confirmModal({ title, message, confirmText = 'Confirm', confirmTone = 'primary' }) {
+    return new Promise((resolve) => {
+      const dialog = $('confirm-modal');
+      const titleEl = $('confirm-modal-title');
+      const descEl = $('confirm-modal-desc');
+      const cancelBtn = $('confirm-modal-cancel');
+      const actionBtn = $('confirm-modal-action');
+
+      if (!dialog) {
+        resolve(window.confirm(`${title}\n\n${message}`));
+        return;
+      }
+
+      titleEl.textContent = title;
+      descEl.textContent = message;
+      actionBtn.textContent = confirmText;
+      actionBtn.className = 'btn ' + (confirmTone === 'danger' ? 'btn-danger' : 'btn-primary');
+
+      let resolved = false;
+
+      function onConfirm() {
+        if (resolved) return;
+        resolved = true;
+        cleanup();
+        dialog.close();
+        resolve(true);
+      }
+
+      function onCancel() {
+        if (resolved) return;
+        resolved = true;
+        cleanup();
+        dialog.close();
+        resolve(false);
+      }
+
+      function onClose() {
+        if (resolved) return;
+        resolved = true;
+        cleanup();
+        resolve(false);
+      }
+
+      function cleanup() {
+        actionBtn.removeEventListener('click', onConfirm);
+        cancelBtn.removeEventListener('click', onCancel);
+        dialog.removeEventListener('close', onClose);
+        dialog.removeEventListener('cancel', onClose);
+      }
+
+      actionBtn.addEventListener('click', onConfirm);
+      cancelBtn.addEventListener('click', onCancel);
+      dialog.addEventListener('close', onClose);
+      dialog.addEventListener('cancel', onClose);
+
+      dialog.showModal();
+      cancelBtn.focus();
+    });
+  }
+
+  SGC.dom = { $, setText, setLoading, element, fillTable, confirmModal };
 }(window.SGC));
