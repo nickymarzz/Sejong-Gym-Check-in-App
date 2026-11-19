@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'expo-status-bar';
 import LoginScreen from '../screens/LoginScreen';
 import MainTabs from './MainTabs';
 import NfcScanScreen from '../screens/NfcScanScreen';
@@ -15,42 +16,49 @@ export default function AppNavigator() {
   const { isDark, theme } = useTheme();
 
   return (
-    <NavigationContainer
-      theme={{
-        dark: isDark,
-        colors: {
-          primary: theme.colors.primary,
-          background: theme.colors.bg,
-          card: theme.colors.surface,
-          text: theme.colors.text,
-          border: theme.colors.border,
-          notification: theme.colors.primary,
-        },
-        fonts: {
-          regular: { fontFamily: 'System', fontWeight: '400' },
-          medium: { fontFamily: 'System', fontWeight: '500' },
-          bold: { fontFamily: 'System', fontWeight: '700' },
-          heavy: { fontFamily: 'System', fontWeight: '800' },
-        },
-      }}
-    >
-      <Root.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.bg } }}>
-        {isAuthenticated ? (
-          <>
-            <Root.Screen name="Main" component={MainTabs} />
-            <Root.Screen
-              name="NfcScan"
-              component={NfcScanScreen}
-              options={{
-                presentation: 'modal',
-                contentStyle: { backgroundColor: '#0e1a2e' },
-              }}
-            />
-          </>
-        ) : (
-          <Root.Screen name="Login" component={LoginScreen} />
-        )}
-      </Root.Navigator>
-    </NavigationContainer>
+    <>
+      <StatusBar
+        style={isDark ? 'light' : 'dark'}
+        backgroundColor={theme.colors.surface}
+        animated={true}
+      />
+      <NavigationContainer
+        theme={{
+          dark: isDark,
+          colors: {
+            primary: theme.colors.primary,
+            background: theme.colors.bg,
+            card: theme.colors.surface,
+            text: theme.colors.text,
+            border: theme.colors.border,
+            notification: theme.colors.primary,
+          },
+          fonts: {
+            regular: { fontFamily: 'System', fontWeight: '400' },
+            medium: { fontFamily: 'System', fontWeight: '500' },
+            bold: { fontFamily: 'System', fontWeight: '700' },
+            heavy: { fontFamily: 'System', fontWeight: '800' },
+          },
+        }}
+      >
+        <Root.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.bg } }}>
+          {isAuthenticated ? (
+            <>
+              <Root.Screen name="Main" component={MainTabs} />
+              <Root.Screen
+                name="NfcScan"
+                component={NfcScanScreen}
+                options={{
+                  presentation: 'modal',
+                  contentStyle: { backgroundColor: '#0e1a2e' },
+                }}
+              />
+            </>
+          ) : (
+            <Root.Screen name="Login" component={LoginScreen} />
+          )}
+        </Root.Navigator>
+      </NavigationContainer>
+    </>
   );
 }

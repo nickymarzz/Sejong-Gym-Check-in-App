@@ -2,7 +2,6 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme';
-import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../context/ThemeContext';
 
 // Layout wrapper for every screen.
@@ -32,7 +31,7 @@ export default function ScreenWrapper({
   extraBottomPadding = theme.spacing.xxxl,
 }) {
   const insets = useSafeAreaInsets();
-  const { isDark } = useTheme();
+  const { isDark, theme } = useTheme();
   const currentBg = bg || theme.colors.bg;
 
   const outerPad = {
@@ -70,7 +69,6 @@ export default function ScreenWrapper({
 
   return (
     <View style={[styles.container, { backgroundColor: currentBg }, outerPad]}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
       {content}
     </View>
   );

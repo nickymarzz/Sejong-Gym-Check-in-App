@@ -13,6 +13,7 @@
       html,
       body {
         height: 100%;
+        background-color: #f8fafc;
       }
       /* These styles disable body scrolling if you are using <ScrollView> */
       body {
@@ -23,8 +24,37 @@
         display: flex;
         height: 100%;
         flex: 1;
+        background-color: transparent;
+      }
+
+      /* View Transitions API: Seamless full-page cross-fade without sudden flash */
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation-duration: 0.28s;
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+          animation-duration: 0.01ms;
+        }
       }
     </style>
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('sgc_theme_dark');
+          if (saved === 'true') {
+            document.documentElement.style.backgroundColor = '#0f172a';
+            document.documentElement.setAttribute('data-theme', 'dark');
+          } else {
+            document.documentElement.style.backgroundColor = '#f8fafc';
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        } catch (_) {}
+      })();
+    </script>
   </head>
 
   <body>

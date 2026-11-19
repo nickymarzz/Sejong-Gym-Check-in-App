@@ -32,7 +32,7 @@ function TabIcon({ route, color, size, focused, activeBg }) {
 
 export default function MainTabs() {
   const insets = useSafeAreaInsets();
-  const { isDark } = useTheme();
+  const { isDark, theme } = useTheme();
 
   const BASE_HEIGHT = 52;
   const BASE_PAD_TOP = 2;

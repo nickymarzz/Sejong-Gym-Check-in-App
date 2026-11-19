@@ -77,7 +77,7 @@ export default function HistoryScreen() {
   const load = useCallback(async () => {
     try {
       const res = await checkInService.getHistory();
-      if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      if (res && res.success && Array.isArray(res.data)) {
         setItems(res.data);
         return;
       }
@@ -91,6 +91,8 @@ export default function HistoryScreen() {
   useFocusEffect(
     useCallback(() => {
       load().finally(() => setLoading(false));
+      const interval = setInterval(load, 3500);
+      return () => clearInterval(interval);
     }, [load])
   );
 

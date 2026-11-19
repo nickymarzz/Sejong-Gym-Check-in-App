@@ -272,17 +272,6 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
               {tagTech ? <Text style={styles.payloadTech}>Tag type: {tagTech}</Text> : null}
             </View>
           ) : null}
-
-          {/* Dev helper: fallback simulation button */}
-          {__DEV__ && phase === 'scanning' ? (
-            <Pressable
-              style={styles.devSimBtn}
-              onPress={() => nfcService.simulateScan('ok', handleScanResult)}
-            >
-              <MaterialCommunityIcons name="cellphone-nfc" size={14} color="#94a3b8" />
-              <Text style={styles.devSimText}>Simulate SGC-GYM Tap</Text>
-            </Pressable>
-          ) : null}
         </View>
       </Animated.View>
     </SafeAreaView>
@@ -376,24 +365,6 @@ const styles = StyleSheet.create({
   actionBtnText: {
     color: '#fff',
     fontSize: 13,
-    fontWeight: '600',
-  },
-
-  devSimBtn: {
-    marginTop: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  devSimText: {
-    color: '#94a3b8',
-    fontSize: 12,
     fontWeight: '600',
   },
 

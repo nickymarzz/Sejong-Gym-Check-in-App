@@ -113,7 +113,7 @@ function computeUserStats(history) {
 
 export default function ProfileScreen() {
   const { currentUser, logout } = useContext(AuthContext);
-  const { isDark, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [notifs, setNotifs] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
 
     try {
       const h = await checkInService.getHistory();
-      if (h?.success && Array.isArray(h.data) && h.data.length > 0) {
+      if (h?.success && Array.isArray(h.data)) {
         setStatsData(computeUserStats(h.data));
         return;
       }
@@ -146,6 +146,8 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       load();
+      const interval = setInterval(load, 4000);
+      return () => clearInterval(interval);
     }, [load])
   );
 
@@ -215,32 +217,6 @@ export default function ProfileScreen() {
             </View>
           ))}
         </View>
-
-        <Pressable
-          onPress={toggleTheme}
-          style={({ pressed }) => [styles.themeToggleCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }, pressed && { opacity: 0.85 }]}
-        >
-          <View style={styles.themeToggleLeft}>
-            <View style={[styles.themeIconWrap, { backgroundColor: isDark ? '#3b2f15' : '#fef3c7' }]}>
-              <Ionicons
-                name={isDark ? 'sunny' : 'moon'}
-                size={20}
-                color={isDark ? '#f59e0b' : '#d97706'}
-              />
-            </View>
-            <View>
-              <Text style={[styles.themeToggleTitle, { color: theme.colors.text }]}>Appearance</Text>
-              <Text style={[styles.themeToggleSub, { color: theme.colors.textSecondary }]}>
-                {isDark ? 'Dark mode enabled' : 'Light mode enabled'}
-              </Text>
-            </View>
-          </View>
-          <View style={[styles.themePill, { backgroundColor: isDark ? '#334155' : theme.colors.primaryLight }]}>
-            <Text style={[styles.themePillText, { color: isDark ? '#f8fafc' : theme.colors.primary }]}>
-              {isDark ? 'Dark 🌙' : 'Light ☀️'}
-            </Text>
-          </View>
-        </Pressable>
 
         <View style={styles.notifHeader}>
           <Text style={[styles.notifTitle, { color: theme.colors.text }]}>Notifications</Text>
@@ -360,52 +336,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     textAlign: 'center',
     marginTop: 2,
-  },
-
-  themeToggleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.lg,
-    padding: 14,
-    marginBottom: 20,
-    ...theme.shadow.sm,
-  },
-  themeToggleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  themeIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeToggleTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: theme.colors.text,
-  },
-  themeToggleSub: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    fontWeight: '500',
-    marginTop: 1,
-  },
-  themePill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: theme.radius.pill,
-  },
-  themePillText: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.3,
   },
 
   notifHeader: {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext, useMemo } from 'react';
-import { View, Text, StyleSheet, Modal, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Modal, RefreshControl, Platform } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../theme';
@@ -25,49 +25,67 @@ export default function HomeScreen() {
   const [nfcVisible, setNfcVisible] = useState(false);
   const [nfcMode, setNfcMode] = useState('in'); // 'in' | 'out'
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
+  const syncActiveSession = useCallback(async () => {
     try {
-      if (refresh) await refresh();
-      try {
-        const activeRes = await checkInService.getActiveSession();
-        if (activeRes?.success) {
-          if (activeRes.data) {
-            const inTimeStr = activeRes.data.checkInTime
-              ? new Date(activeRes.data.checkInTime).toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true,
-                })
-              : userData?.checkInTime;
-            const updated = {
-              ...userData,
+      const activeRes = await checkInService.getActiveSession();
+      if (activeRes?.success) {
+        if (activeRes.data) {
+          const inTimeStr = activeRes.data.checkInTime
+            ? new Date(activeRes.data.checkInTime).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+              })
+            : null;
+          setUserData((prev) => {
+            if (prev?.checkedIn && prev?.checkInTime === inTimeStr) return prev;
+            return {
+              ...(prev || {}),
               checkedIn: true,
-              checkInTime: inTimeStr,
+              checkInTime: inTimeStr || prev?.checkInTime,
               currentGym: activeRes.data.gymName || 'Student Union Gym',
             };
-            setUserData(updated);
-            updateUser(updated);
-          } else if (userData?.checkedIn) {
-            const updated = {
-              ...userData,
+          });
+        } else {
+          setUserData((prev) => {
+            if (!prev?.checkedIn) return prev;
+            return {
+              ...(prev || {}),
               checkedIn: false,
               checkInTime: null,
               currentGym: null,
             };
-            setUserData(updated);
-            updateUser(updated);
-          }
+          });
         }
-      } catch (_) {}
+      }
+    } catch (_) {}
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      if (refresh) await refresh();
+      await syncActiveSession();
     } finally {
       setRefreshing(false);
     }
-  }, [refresh, userData, updateUser]);
+  }, [refresh, syncActiveSession]);
 
   useEffect(() => {
     setUserData(currentUser);
   }, [currentUser]);
+
+  // Sync active check-in session periodically and on occupancy updates so web
+  // automatically reflects check-ins/check-outs made from Android without reload
+  useEffect(() => {
+    syncActiveSession();
+    const interval = setInterval(syncActiveSession, 3500);
+    return () => clearInterval(interval);
+  }, [syncActiveSession]);
+
+  useEffect(() => {
+    syncActiveSession();
+  }, [gymData?.currentOccupancy, syncActiveSession]);
 
   const setMessage = useCallback((message, type) => {
     setToast({ message, type });
@@ -226,21 +244,25 @@ export default function HomeScreen() {
         <CapacityCard gymData={gymData} isLive={isLiveSse} />
         <UserStatus userData={userData} />
 
-        <PrimaryButton
-          userData={userData}
-          gymData={gymData}
-          onPress={handlePrimaryAction}
-          loading={loading}
-        />
+        {Platform.OS !== 'web' && (
+          <PrimaryButton
+            userData={userData}
+            gymData={gymData}
+            onPress={handlePrimaryAction}
+            loading={loading}
+          />
+        )}
       </ScreenWrapper>
 
-      <Modal visible={nfcVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNfcVisible(false)}>
-        <NfcScanScreen
-          mode={nfcMode}
-          onComplete={handleNfcComplete}
-          onCancel={() => setNfcVisible(false)}
-        />
-      </Modal>
+      {Platform.OS !== 'web' && (
+        <Modal visible={nfcVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNfcVisible(false)}>
+          <NfcScanScreen
+            mode={nfcMode}
+            onComplete={handleNfcComplete}
+            onCancel={() => setNfcVisible(false)}
+          />
+        </Modal>
+      )}
     </View>
   );
 }
