@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext, useMemo } from 'react';
 import { View, Text, StyleSheet, Modal, RefreshControl } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { theme } from '../theme';
 import ScreenWrapper from '../components/ScreenWrapper';
 import Header from '../components/Header';
@@ -14,6 +15,7 @@ import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
 
 export default function HomeScreen() {
   const { currentUser, updateUser, logout } = useContext(AuthContext);
+  const { theme } = useTheme();
 
   const { gymData, setGymData, refresh, isLiveSse } = useLiveOccupancy('gym-001', 3500);
   const [userData, setUserData] = useState(currentUser);
@@ -193,7 +195,7 @@ export default function HomeScreen() {
   const first = useMemo(() => (userData?.name || '').split(' ')[0] || 'there', [userData]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
       <Header userData={userData} onLogout={logout} />
 
       <ScreenWrapper
@@ -209,8 +211,8 @@ export default function HomeScreen() {
         }
       >
         <View style={styles.welcome}>
-          <Text style={styles.welcomeTitle}>Welcome back, {first} 👋</Text>
-          <Text style={styles.welcomeSub}>
+          <Text style={[styles.welcomeTitle, { color: theme.colors.text }]}>Welcome back, {first} 👋</Text>
+          <Text style={[styles.welcomeSub, { color: theme.colors.textSecondary }]}>
             Ready for your workout at {gymData?.gymName || 'the gym'}?
           </Text>
         </View>

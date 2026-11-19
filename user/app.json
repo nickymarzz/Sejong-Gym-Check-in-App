@@ -4,7 +4,8 @@
     "slug": "sejong-gym-checkin",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "kr.ac.sejong.sgc",
@@ -14,10 +15,18 @@
     },
     "android": {
       "package": "kr.ac.sejong.sgc",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#002667"
+      },
       "permissions": [
         "android.permission.NFC",
         "android.permission.POST_NOTIFICATIONS"
       ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-status-bar",
@@ -27,7 +36,8 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#C41230"
+          "color": "#002667",
+          "largeIcon": "./assets/icon.png"
         }
       ]
     ],

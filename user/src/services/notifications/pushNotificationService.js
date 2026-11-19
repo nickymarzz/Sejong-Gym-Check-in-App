@@ -23,7 +23,7 @@ export async function registerForPushNotificationsAsync() {
         name: 'Gym Notifications',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#C41230',
+        lightColor: '#002667',
         sound: true,
       });
     }
@@ -79,22 +79,25 @@ export async function syncPushTokenToBackend(fcmToken) {
 }
 
 /**
- * Trigger an immediate local test notification in the phone's notification tray
+ * Setup listeners for incoming foreground push notifications and tray tap responses
  */
-export async function showLocalNotification(title, body, data = {}) {
-  try {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: title || 'Sejong Gym',
-        body: body || 'Notification test',
-        sound: true,
-        data,
-      },
-      trigger: null, // immediate display in tray
-    });
-    return true;
-  } catch (err) {
-    console.warn('showLocalNotification error:', err?.message);
-    return false;
-  }
+export function addNotificationListeners(onNotificationReceived, onNotificationResponse) {
+  if (Platform.OS === 'web') return () => {};
+
+  const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
+    if (typeof onNotificationReceived === 'function') {
+      onNotificationReceived(notification);
+    }
+  });
+
+  const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+    if (typeof onNotificationResponse === 'function') {
+      onNotificationResponse(response);
+    }
+  });
+
+  return () => {
+    receivedSub.remove();
+    responseSub.remove();
+  };
 }

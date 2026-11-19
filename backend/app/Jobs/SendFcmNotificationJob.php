@@ -42,6 +42,9 @@ class SendFcmNotificationJob implements ShouldQueue
         }
 
         $credentialsPath = config('services.firebase.credentials');
+        if (!empty($credentialsPath) && !file_exists($credentialsPath) && file_exists(base_path($credentialsPath))) {
+            $credentialsPath = base_path($credentialsPath);
+        }
         $title = (string) ($this->notification->title ?? 'Sejong Gym');
         $body = (string) ($this->notification->body ?? '');
         if (empty($credentialsPath) || !file_exists($credentialsPath)) {
@@ -76,7 +79,6 @@ class SendFcmNotificationJob implements ShouldQueue
                     ->withData(array_merge($this->notification->data ?? [], [
                         'notificationId' => (string) ($this->notification->_id ?? ''),
                         'type' => (string) ($this->notification->type ?? ''),
-                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                     ]))
                     ->withApnsConfig($apns)
                     ->withAndroidConfig($androidConfig);

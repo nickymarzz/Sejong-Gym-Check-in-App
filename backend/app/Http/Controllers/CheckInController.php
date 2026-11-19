@@ -9,6 +9,7 @@ use App\Models\Gym;
 use App\Models\User;
 use App\Models\Notification;
 use App\Jobs\SendFcmNotificationJob;
+use App\Jobs\SendCapacityAlertJob;
 use App\Jobs\UpdateDailySummaryJob;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
@@ -133,6 +134,15 @@ class CheckInController extends Controller
 
                 SendFcmNotificationJob::dispatch($notification, $user);
                 UpdateDailySummaryJob::dispatch($gym, $user, $checkIn, 'checkin');
+
+                $gymCap = (int) $gym->capacity;
+                $gymOcc = (int) $gym->currentOccupancy;
+                if ($gymCap > 0) {
+                    $pct = (int) round(($gymOcc / $gymCap) * 100);
+                    if ($pct >= 80) {
+                        SendCapacityAlertJob::dispatch($gym, $pct, $gymOcc, $gymCap);
+                    }
+                }
 
                 $updatedGym = [
                     'gymId' => $gym->gymId,

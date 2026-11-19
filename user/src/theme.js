@@ -1,37 +1,68 @@
 // Design tokens ported directly from web src/index.css :root variables.
 // Changing a value here will update the whole app's theme.
-// FUTURE: Add dark mode support by exporting a second theme object.
+
+export const lightColors = {
+  primary: '#c30e2e',
+  primaryDark: '#8f0a22',
+  primaryLight: '#fdeaee',
+
+  success: '#2e7d32',
+  successBg: '#e8f5e9',
+  successBorder: '#c8e6c9',
+
+  danger: '#c62828',
+  dangerBg: '#ffebee',
+  dangerBorder: '#ffcdd2',
+
+  warning: '#ef6c00',
+  warningBg: '#fff3e0',
+  warningBorder: '#ffe0b2',
+
+  text: '#1a2332',
+  textSecondary: '#5c6b7d',
+  textMuted: '#8a97a8',
+
+  border: '#e2e8f0',
+  bg: '#f4f7fb',
+  surface: '#ffffff',
+
+  dev: '#5e35b1',
+  devBg: '#ede7f6',
+  devBorder: '#c5cae9',
+};
+
+export const darkColors = {
+  primary: '#e02447',
+  primaryDark: '#ff4d6d',
+  primaryLight: '#2c1218',
+
+  success: '#4caf50',
+  successBg: '#132817',
+  successBorder: '#234a2a',
+
+  danger: '#ef5350',
+  dangerBg: '#361517',
+  dangerBorder: '#5c2226',
+
+  warning: '#ffa726',
+  warningBg: '#34210c',
+  warningBorder: '#5b3a16',
+
+  text: '#f8fafc',
+  textSecondary: '#94a3b8',
+  textMuted: '#64748b',
+
+  border: '#2a3547',
+  bg: '#0b1120',
+  surface: '#151f32',
+
+  dev: '#b39ddb',
+  devBg: '#22193b',
+  devBorder: '#413269',
+};
 
 export const theme = {
-  colors: {
-    primary: '#c30e2e',
-    primaryDark: '#8f0a22',
-    primaryLight: '#fdeaee',
-
-    success: '#2e7d32',
-    successBg: '#e8f5e9',
-    successBorder: '#c8e6c9',
-
-    danger: '#c62828',
-    dangerBg: '#ffebee',
-    dangerBorder: '#ffcdd2',
-
-    warning: '#ef6c00',
-    warningBg: '#fff3e0',
-    warningBorder: '#ffe0b2',
-
-    text: '#1a2332',
-    textSecondary: '#5c6b7d',
-    textMuted: '#8a97a8',
-
-    border: '#e2e8f0',
-    bg: '#f4f7fb',
-    surface: '#ffffff',
-
-    dev: '#5e35b1',
-    devBg: '#ede7f6',
-    devBorder: '#c5cae9',
-  },
+  colors: { ...lightColors },
   spacing: {
     xs: 4,
     sm: 8,

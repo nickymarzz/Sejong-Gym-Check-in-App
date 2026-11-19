@@ -5,17 +5,19 @@ import LoginScreen from '../screens/LoginScreen';
 import MainTabs from './MainTabs';
 import NfcScanScreen from '../screens/NfcScanScreen';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { theme } from '../theme';
 
 const Root = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const { isAuthenticated } = useContext(AuthContext);
+  const { isDark, theme } = useTheme();
 
   return (
     <NavigationContainer
       theme={{
-        dark: false,
+        dark: isDark,
         colors: {
           primary: theme.colors.primary,
           background: theme.colors.bg,

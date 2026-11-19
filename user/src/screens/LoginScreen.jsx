@@ -12,12 +12,15 @@ import {
   Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import ScreenWrapper from '../components/ScreenWrapper';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { theme } from '../theme';
 
 export default function LoginScreen() {
   const { login, loading } = useContext(AuthContext);
+  const { theme, isDark, toggleTheme } = useTheme();
   const [studentId, setStudentId] = useState('20241234');
   const [password, setPassword] = useState('password');
   const [errorMsg, setErrorMsg] = useState('');
@@ -39,8 +42,35 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScreenWrapper scroll={false}>
+        <View style={{ alignItems: 'flex-end', marginBottom: 12 }}>
+          <Pressable
+            onPress={toggleTheme}
+            style={({ pressed }) => [
+              {
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: theme.colors.surface,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+              pressed && { opacity: 0.7 },
+            ]}
+            hitSlop={8}
+            accessibilityLabel="Toggle light or dark theme"
+          >
+            <Ionicons
+              name={isDark ? 'sunny' : 'moon-outline'}
+              size={18}
+              color={isDark ? '#f59e0b' : theme.colors.textSecondary}
+            />
+          </Pressable>
+        </View>
+
         <View style={styles.inner}>
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <View style={styles.header}>
               <View style={styles.logo}>
                 <Image
@@ -49,15 +79,15 @@ export default function LoginScreen() {
                   resizeMode="contain"
                 />
               </View>
-              <Text style={styles.title}>Sejong Gym Check-in</Text>
-              <Text style={styles.subtitle}>Sign in with your student account</Text>
+              <Text style={[styles.title, { color: theme.colors.text }]}>Sejong Gym Check-in</Text>
+              <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>Sign in with your student account</Text>
             </View>
 
             <View style={styles.form}>
               <View style={styles.group}>
-                <Text style={styles.label}>Student ID</Text>
+                <Text style={[styles.label, { color: theme.colors.text }]}>Student ID</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: theme.colors.bg, borderColor: theme.colors.border, color: theme.colors.text }]}
                   placeholder="e.g. 20241234"
                   placeholderTextColor={theme.colors.textMuted}
                   value={studentId}
@@ -70,9 +100,9 @@ export default function LoginScreen() {
               </View>
 
               <View style={styles.group}>
-                <Text style={styles.label}>Password</Text>
+                <Text style={[styles.label, { color: theme.colors.text }]}>Password</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: theme.colors.bg, borderColor: theme.colors.border, color: theme.colors.text }]}
                   placeholder="Enter your password"
                   placeholderTextColor={theme.colors.textMuted}
                   value={password}

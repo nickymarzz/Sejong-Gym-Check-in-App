@@ -13,9 +13,9 @@ import ScreenWrapper from '../components/ScreenWrapper';
 import Header from '../components/Header';
 import ToastAlert from '../components/ToastAlert';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { theme } from '../theme';
 import { notificationService, checkInService } from '../services';
-import { showLocalNotification } from '../services/notifications/pushNotificationService';
 import { initialCheckInHistory } from '../data/mockCheckInHistory';
 
 function iconFor(t) {
@@ -113,6 +113,7 @@ function computeUserStats(history) {
 
 export default function ProfileScreen() {
   const { currentUser, logout } = useContext(AuthContext);
+  const { isDark, toggleTheme } = useTheme();
   const [notifs, setNotifs] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
@@ -160,18 +161,6 @@ export default function ProfileScreen() {
     load();
   };
 
-  const handleTestNotification = async () => {
-    const success = await showLocalNotification(
-      'Sejong Gym Alert',
-      '🔔 Welcome to Sejong Gym! Tap here to see capacity and your active session.'
-    );
-    if (success) {
-      setToast({ message: 'Notification sent to phone tray!', type: 'success' });
-    } else {
-      setToast({ message: 'Could not send notification. Check permissions.', type: 'error' });
-    }
-  };
-
   const stats = [
     { label: 'This week', value: statsData.weeklySessions, icon: 'calendar-week', color: theme.colors.primary },
     { label: 'Total hours', value: statsData.totalHours, icon: 'clock-outline', color: theme.colors.success },
@@ -179,7 +168,7 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
       <Header userData={currentUser} onLogout={logout} title="Profile" subtitle="Account & Notifications" />
       <ScreenWrapper
         padTop={false}
@@ -193,7 +182,7 @@ export default function ProfileScreen() {
           />
         }
       >
-        <View style={styles.profileCard}>
+        <View style={[styles.profileCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
               {(currentUser?.name || 'DS').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
@@ -201,7 +190,7 @@ export default function ProfileScreen() {
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <View style={styles.nameRow}>
-              <Text style={styles.name}>{currentUser?.name || 'Demo Student'}</Text>
+              <Text style={[styles.name, { color: theme.colors.text }]}>{currentUser?.name || 'Demo Student'}</Text>
               {currentUser?.role ? (
                 <View style={[styles.roleBadge, currentUser.role === 'admin' ? styles.roleBadgeAdmin : styles.roleBadgeStudent]}>
                   <Text style={[styles.roleBadgeText, currentUser.role === 'admin' ? styles.roleBadgeTextAdmin : styles.roleBadgeTextStudent]}>
@@ -210,33 +199,54 @@ export default function ProfileScreen() {
                 </View>
               ) : null}
             </View>
-            <Text style={styles.idLine}>ID: {currentUser?.studentId}</Text>
-            <Text style={styles.dept}>{currentUser?.department || '—'}</Text>
+            <Text style={[styles.idLine, { color: theme.colors.textMuted }]}>ID: {currentUser?.studentId}</Text>
+            <Text style={[styles.dept, { color: theme.colors.textSecondary }]}>{currentUser?.department || '—'}</Text>
           </View>
         </View>
 
         <View style={styles.statsGrid}>
           {stats.map(s => (
-            <View key={s.label} style={styles.statCard}>
+            <View key={s.label} style={[styles.statCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
               <View style={[styles.statIcon, { backgroundColor: s.color + '18' }]}>
                 <MaterialCommunityIcons name={s.icon} size={20} color={s.color} />
               </View>
-              <Text style={styles.statValue}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
+              <Text style={[styles.statValue, { color: theme.colors.text }]}>{s.value}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>{s.label}</Text>
             </View>
           ))}
         </View>
 
-        <View style={styles.notifHeader}>
-          <Text style={styles.notifTitle}>Notifications</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable onPress={handleTestNotification} style={({ pressed }) => [styles.markAll, pressed && { opacity: 0.7 }]}>
-              <Text style={styles.markAllText}>Test Tray</Text>
-            </Pressable>
-            <Pressable onPress={markAllRead} style={({ pressed }) => [styles.markAll, pressed && { opacity: 0.7 }]}>
-              <Text style={styles.markAllText}>Mark all read</Text>
-            </Pressable>
+        <Pressable
+          onPress={toggleTheme}
+          style={({ pressed }) => [styles.themeToggleCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }, pressed && { opacity: 0.85 }]}
+        >
+          <View style={styles.themeToggleLeft}>
+            <View style={[styles.themeIconWrap, { backgroundColor: isDark ? '#3b2f15' : '#fef3c7' }]}>
+              <Ionicons
+                name={isDark ? 'sunny' : 'moon'}
+                size={20}
+                color={isDark ? '#f59e0b' : '#d97706'}
+              />
+            </View>
+            <View>
+              <Text style={[styles.themeToggleTitle, { color: theme.colors.text }]}>Appearance</Text>
+              <Text style={[styles.themeToggleSub, { color: theme.colors.textSecondary }]}>
+                {isDark ? 'Dark mode enabled' : 'Light mode enabled'}
+              </Text>
+            </View>
           </View>
+          <View style={[styles.themePill, { backgroundColor: isDark ? '#334155' : theme.colors.primaryLight }]}>
+            <Text style={[styles.themePillText, { color: isDark ? '#f8fafc' : theme.colors.primary }]}>
+              {isDark ? 'Dark 🌙' : 'Light ☀️'}
+            </Text>
+          </View>
+        </Pressable>
+
+        <View style={styles.notifHeader}>
+          <Text style={[styles.notifTitle, { color: theme.colors.text }]}>Notifications</Text>
+          <Pressable onPress={markAllRead} style={({ pressed }) => [styles.markAll, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }, pressed && { opacity: 0.7 }]}>
+            <Text style={styles.markAllText}>Mark all read</Text>
+          </Pressable>
         </View>
 
         <ToastAlert message={toast.message} type={toast.type} onClear={() => setToast({ message: '', type: '' })} />
@@ -252,27 +262,27 @@ export default function ProfileScreen() {
               item.type === 'capacity' ? theme.colors.warning :
               theme.colors.primary;
             return (
-              <View style={[styles.notifRow, item.read ? { opacity: 0.75 } : null]}>
+              <View style={[styles.notifRow, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }, item.read ? { opacity: 0.75 } : null]}>
                 <View style={[styles.notifIconWrap, { backgroundColor: color + '18' }]}>
                   <MaterialCommunityIcons name={iconFor(item.type)} size={18} color={color} />
                 </View>
                 <View style={{ flex: 1, gap: 3 }}>
-                  <Text style={styles.notifTitleRow}>{item.title}</Text>
-                  <Text style={styles.notifBody}>{item.message}</Text>
-                  <Text style={styles.notifTime}>{prettyTime(item.timestamp)}</Text>
+                  <Text style={[styles.notifTitleRow, { color: theme.colors.text }]}>{item.title}</Text>
+                  <Text style={[styles.notifBody, { color: theme.colors.textSecondary }]}>{item.message || item.body}</Text>
+                  <Text style={[styles.notifTime, { color: theme.colors.textMuted }]}>{prettyTime(item.timestamp)}</Text>
                 </View>
                 {!item.read ? <View style={[styles.dot, { backgroundColor: theme.colors.primary }]} /> : null}
               </View>
             );
           }}
           ListEmptyComponent={
-            <Text style={styles.empty}>No notifications yet.</Text>
+            <Text style={[styles.empty, { color: theme.colors.textMuted }]}>No notifications yet.</Text>
           }
         />
 
         <Pressable
           onPress={logout}
-          style={({ pressed }) => [styles.logoutRow, pressed && { opacity: 0.85 }]}
+          style={({ pressed }) => [styles.logoutRow, { backgroundColor: theme.colors.dangerBg, borderColor: theme.colors.dangerBorder }, pressed && { opacity: 0.85 }]}
         >
           <Ionicons name="log-out-outline" size={20} color={theme.colors.danger} />
           <Text style={styles.logoutText}>Log out</Text>
@@ -350,6 +360,52 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     textAlign: 'center',
     marginTop: 2,
+  },
+
+  themeToggleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.lg,
+    padding: 14,
+    marginBottom: 20,
+    ...theme.shadow.sm,
+  },
+  themeToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  themeIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeToggleTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: theme.colors.text,
+  },
+  themeToggleSub: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  themePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
+  },
+  themePillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
 
   notifHeader: {

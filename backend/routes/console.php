@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -270,10 +271,29 @@ Artisan::command('sgc:auto-checkout {gymId=gym-001}', function ($gymId) {
 
     foreach ($activeCheckIns as $checkIn) {
         $checkIn->autoExpire($outTime);
-        \App\Models\User::where('userId', $checkIn->userId)->update([
-            'checkedIn' => false,
-            'checkInTime' => null,
-        ]);
+        $user = \App\Models\User::where('userId', $checkIn->userId)->first();
+        if ($user) {
+            $user->checkedIn = false;
+            $user->checkInTime = null;
+            $user->save();
+
+            $notification = \App\Models\Notification::create([
+                'userId' => $user->userId,
+                'studentId' => $user->studentId,
+                'title' => 'Gym Session Auto-Closed',
+                'body' => "Your workout session at {$gym->gymName} was automatically concluded at closing time ({$closeTimeStr}).",
+                'type' => \App\Models\Notification::TYPE_REMINDER,
+                'data' => [
+                    'gymId' => $gym->gymId,
+                    'checkInId' => (string) $checkIn->_id,
+                    'autoExpired' => true,
+                ],
+                'read' => false,
+                'sentAt' => now(),
+            ]);
+
+            \App\Jobs\SendFcmNotificationJob::dispatch($notification, $user);
+        }
     }
 
     $gym->currentOccupancy = 0;
@@ -324,5 +344,15 @@ Artisan::command('sgc:send-reminders {gymId=gym-001}', function ($gymId) {
     $this->info("✓ Dispatched {$count} closing reminders to the Redis queue.");
     return 0;
 })->purpose('Send closing reminders to active gym occupants via Redis queue & FCM');
+
+Schedule::command('sgc:send-reminders gym-001')
+    ->dailyAt('21:30')
+    ->timezone('Asia/Seoul')
+    ->name('sgc-send-reminders');
+
+Schedule::command('sgc:auto-checkout gym-001')
+    ->dailyAt('22:00')
+    ->timezone('Asia/Seoul')
+    ->name('sgc-auto-checkout');
 
 
