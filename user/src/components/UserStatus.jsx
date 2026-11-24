@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 function formatDateTime12h(timeStr) {
   if (!timeStr) return '';
@@ -13,15 +14,16 @@ function formatDateTime12h(timeStr) {
 }
 
 export default function UserStatus({ userData }) {
+  const { theme } = useTheme();
   if (!userData) return null;
   const inGym = !!userData.checkedIn;
   const outTime = userData.lastCheckOutAt || userData.lastCheckOutTime;
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>Your Check-in Status</Text>
+    <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+      <Text style={[styles.cardTitle, { color: theme.colors.textSecondary }]}>Your Check-in Status</Text>
 
-      <View style={[styles.statusBox, inGym ? styles.checkedInBox : styles.checkedOutBox]}>
+      <View style={[styles.statusBox, inGym ? styles.checkedInBox : styles.checkedOutBox, { backgroundColor: inGym ? theme.colors.successBg : theme.colors.bg, borderColor: inGym ? theme.colors.successBorder : theme.colors.border }]}>
         <View
           style={[
             styles.iconWrap,
@@ -38,13 +40,13 @@ export default function UserStatus({ userData }) {
         </View>
 
         <View style={{ flex: 1 }}>
-          <Text style={[styles.statusLabel, inGym ? styles.textIn : styles.textOut]}>
+          <Text style={[styles.statusLabel, inGym ? styles.textIn : styles.textOut, { color: inGym ? theme.colors.success : theme.colors.textSecondary }]}>
             {inGym ? 'Checked In' : 'Not Checked In'}
           </Text>
           {inGym && userData.checkInTime ? (
-            <Text style={styles.statusDetail}>Since {formatDateTime12h(userData.checkInTime)}</Text>
+            <Text style={[styles.statusDetail, { color: theme.colors.textMuted }]}>Since {formatDateTime12h(userData.checkInTime)}</Text>
           ) : outTime ? (
-            <Text style={styles.statusDetail}>Last check-out: {formatDateTime12h(outTime)}</Text>
+            <Text style={[styles.statusDetail, { color: theme.colors.textMuted }]}>Last check-out: {formatDateTime12h(outTime)}</Text>
           ) : null}
         </View>
       </View>

@@ -1,6 +1,13 @@
 :root {
   color-scheme: light dark;
 
+  &:has(> head > meta[name="color-scheme"][content="dark"]) {
+    color-scheme: dark;
+  }
+  &:has(> head > meta[name="color-scheme"][content="light"]) {
+    color-scheme: light;
+  }
+
   --font: system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --page: #f1f1ee;
@@ -31,7 +38,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]):not(:has(> head > meta[name="color-scheme"][content="light"])) {
     --page: #0d0d0d;
     --surface: #1a1a19;
     --ink-1: #f0efec;
@@ -50,6 +57,55 @@
     --c-occupancy: #199e70;
     --c-duration: #9085e9;
   }
+}
+
+:root[data-theme="dark"],
+:root:has(> head > meta[name="color-scheme"][content="dark"]) {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink-1: #f0efec;
+  --ink-2: #c3c2b7;
+  --ink-3: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+
+  --brand: #256abf;
+  --accent: #3987e5;
+  --focus: #6da7ec;
+
+  --c-visits: #3987e5;
+  --c-unique: #d95926;
+  --c-occupancy: #199e70;
+  --c-duration: #9085e9;
+}
+
+:root[data-theme="light"],
+:root:has(> head > meta[name="color-scheme"][content="light"]) {
+  color-scheme: light;
+  --page: #f1f1ee;
+  --surface: #fcfcfb;
+  --ink-1: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-3: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+
+  --brand: #1e56a0;
+  --brand-ink: #ffffff;
+  --accent: #2a78d6;
+  --focus: #2a78d6;
+
+  --good: #0ca30c;
+  --warn: #fab219;
+  --crit: #d03b3b;
+
+  --c-visits: #2a78d6;
+  --c-unique: #eb6834;
+  --c-occupancy: #1baf7a;
+  --c-duration: #6250d6;
 }
 
 *,
@@ -121,6 +177,9 @@ main.shell {
 .btn-primary { background: var(--brand); color: var(--brand-ink); }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
 
+.btn-danger { background: var(--crit); color: #ffffff; border-color: var(--crit); }
+.btn-danger:hover:not(:disabled) { filter: brightness(1.1); }
+
 .btn-ghost { border-color: var(--border); background: var(--surface); }
 .btn-ghost:hover:not(:disabled) { border-color: var(--axis); }
 
@@ -156,7 +215,7 @@ button.link {
 .brand { display: flex; align-items: center; gap: 12px; }
 
 .brand-mark {
-  display: grid;
+  display: inline-grid;
   place-items: center;
   width: 32px;
   height: 32px;
@@ -164,15 +223,126 @@ button.link {
   background: var(--brand);
   color: var(--brand-ink);
   font-weight: 700;
+  object-fit: cover;
+}
+
+img.brand-mark {
+  background: transparent;
 }
 
 .brand-title { font-size: 16px; font-weight: 600; }
 
 .login {
+  position: relative;
   display: grid;
   place-items: center;
   min-height: 100vh;
   padding: 24px 16px;
+}
+
+.login-header-actions {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--ink-1);
+  background: var(--border);
+}
+
+.theme-toggle svg {
+  display: block;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+}
+
+.theme-toggle:active svg {
+  transform: scale(0.85);
+}
+
+.theme-toggle .theme-icon-sun {
+  display: none;
+}
+
+.theme-toggle .theme-icon-moon {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not(:has(> head > meta[name="color-scheme"][content="light"])) .theme-toggle .theme-icon-sun {
+    display: block;
+  }
+  :root:not([data-theme="light"]):not(:has(> head > meta[name="color-scheme"][content="light"])) .theme-toggle .theme-icon-moon {
+    display: none;
+  }
+}
+
+:root[data-theme="dark"] .theme-toggle .theme-icon-sun,
+:root:has(> head > meta[name="color-scheme"][content="dark"]) .theme-toggle .theme-icon-sun {
+  display: block;
+}
+
+:root[data-theme="dark"] .theme-toggle .theme-icon-moon,
+:root:has(> head > meta[name="color-scheme"][content="dark"]) .theme-toggle .theme-icon-moon {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle .theme-icon-sun,
+:root:has(> head > meta[name="color-scheme"][content="light"]) .theme-toggle .theme-icon-sun {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle .theme-icon-moon,
+:root:has(> head > meta[name="color-scheme"][content="light"]) .theme-toggle .theme-icon-moon {
+  display: block;
+}
+
+/* View Transitions API: Seamless full-page cross-fade without sudden flash */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.28s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fallback smooth transitions for surfaces and typography */
+@media (prefers-reduced-motion: no-preference) {
+  body {
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  .topbar,
+  .card,
+  .btn,
+  .field input,
+  .field select,
+  .banner,
+  .table-wrap,
+  .login-card {
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms;
+  }
 }
 
 .login-card {
@@ -459,6 +629,58 @@ button.link {
   .live-body { grid-template-columns: minmax(0, 1fr); }
   .hero-number { font-size: 56px; }
   .chart-box { height: 220px; }
+}
+
+/* Modal Confirmation Dialog per Modern Web Guidance */
+dialog.modal-dialog {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-1);
+  padding: 0;
+  max-width: 440px;
+  width: calc(100% - 32px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  margin: auto;
+}
+
+dialog.modal-dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog.modal-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.modal-content {
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink-1);
+}
+
+.modal-desc {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -6,11 +6,12 @@ import HomeScreen from '../screens/HomeScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { theme } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 import { View, StyleSheet, Text } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
-function TabIcon({ route, color, size, focused }) {
+function TabIcon({ route, color, size, focused, activeBg }) {
   let icon = null;
   if (route.name === 'Home') {
     icon = <MaterialCommunityIcons name="home-outline" size={size} color={color} />;
@@ -23,7 +24,7 @@ function TabIcon({ route, color, size, focused }) {
   // The wrapper padding is applied at all times so the icon never re-lays-out
   // when the active pill appears — only the background colour changes.
   return (
-    <View style={[styles.tabIconWrap, focused && styles.tabIconWrapActive]}>
+    <View style={[styles.tabIconWrap, focused && { backgroundColor: activeBg || theme.colors.primaryLight }]}>
       {icon}
     </View>
   );
@@ -31,6 +32,7 @@ function TabIcon({ route, color, size, focused }) {
 
 export default function MainTabs() {
   const insets = useSafeAreaInsets();
+  const { isDark, theme } = useTheme();
 
   const BASE_HEIGHT = 52;
   const BASE_PAD_TOP = 2;
@@ -87,7 +89,7 @@ export default function MainTabs() {
           );
         },
         tabBarIcon: ({ color, size, focused }) => (
-          <TabIcon route={route} color={color} size={20} focused={focused} />
+          <TabIcon route={route} color={color} size={20} focused={focused} activeBg={theme.colors.primaryLight} />
         ),
       })}
     >

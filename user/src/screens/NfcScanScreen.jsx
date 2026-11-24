@@ -233,6 +233,41 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
               </Pressable>
             </View>
           ) : null}
+
+          {payload ? (
+            <View style={styles.payloadBlock}>
+              <Text style={styles.payloadLabel}>Sticker payload</Text>
+              <Text
+                style={[
+                  styles.payloadValue,
+                  payload === EXPECTED_PAYLOAD ? { color: '#86efac' } : { color: '#fca5a5' },
+                ]}
+              >
+                {payload}
+              </Text>
+              {payload === EXPECTED_PAYLOAD ? (
+                <Text style={styles.payloadHint}>
+                  ✓ Expected value — sending to Laravel with your auth token
+                </Text>
+              ) : (
+                <Text style={styles.payloadHint}>
+                  ✗ Expected "{EXPECTED_PAYLOAD}" — backend will reject this
+                </Text>
+              )}
+              {tagTech ? <Text style={styles.payloadTech}>Tag type: {tagTech}</Text> : null}
+            </View>
+          ) : null}
+
+          {/* Dev helper: fallback simulation button */}
+          {__DEV__ && phase === 'scanning' ? (
+            <Pressable
+              style={styles.devSimBtn}
+              onPress={() => nfcService.simulateScan('ok', handleScanResult)}
+            >
+              <MaterialCommunityIcons name="cellphone-nfc" size={14} color="#94a3b8" />
+              <Text style={styles.devSimText}>Simulate SGC-GYM Tap</Text>
+            </Pressable>
+          ) : null}
         </View>
       </Animated.View>
     </SafeAreaView>
@@ -326,6 +361,64 @@ const styles = StyleSheet.create({
   actionBtnText: {
     color: '#fff',
     fontSize: 13,
+    fontWeight: '600',
+  },
+
+  devSimBtn: {
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  devSimText: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  payloadBlock: {
+    marginTop: 18,
+    width: '100%',
+    maxWidth: 360,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+  },
+  payloadLabel: {
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  payloadValue: {
+    marginTop: 4,
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  payloadHint: {
+    marginTop: 8,
+    color: '#cbd5e1',
+    fontSize: 11,
+    textAlign: 'center',
+    fontWeight: '500',
+    lineHeight: 14,
+  },
+  payloadTech: {
+    marginTop: 6,
+    color: '#94a3b8',
+    fontSize: 11,
     fontWeight: '600',
   },
 });

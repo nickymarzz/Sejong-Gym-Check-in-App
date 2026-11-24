@@ -7,6 +7,7 @@ export async function getNotifications() {
       id: n.id,
       title: n.title,
       body: n.body,
+      message: n.body || n.message || '',
       type: n.type || 'info',
       read: !!n.read,
       timestamp: n.timestamp ? new Date(n.timestamp).getTime() : Date.now(),

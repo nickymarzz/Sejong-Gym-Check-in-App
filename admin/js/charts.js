@@ -214,7 +214,7 @@
       existing.config.type = config.type;
       existing.data = config.data;
       existing.options = config.options;
-      existing.update();
+      existing.update('none');
       return existing;
     }
     if (existing) existing.destroy();

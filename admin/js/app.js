@@ -159,13 +159,54 @@
 
   function redrawCharts() {
     if (!state.active) return;
-    charts.destroyAll();
     charts.init();
     weekly.render();
     daily.render();
   }
 
+  function getCurrentTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  function applyTheme(theme) {
+    const meta = document.querySelector('meta[name="color-scheme"]');
+    if (theme === 'dark' || theme === 'light') {
+      document.documentElement.setAttribute('data-theme', theme);
+      if (meta) meta.content = theme;
+      localStorage.setItem('theme', theme);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      if (meta) meta.content = 'light dark';
+      localStorage.removeItem('theme');
+    }
+
+    const current = getCurrentTheme();
+    const nextLabel = current === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+    document.querySelectorAll('.theme-toggle').forEach((btn) => {
+      btn.setAttribute('aria-label', nextLabel);
+      btn.setAttribute('title', nextLabel);
+    });
+
+    redrawCharts();
+  }
+
+  function toggleTheme() {
+    const current = getCurrentTheme();
+    const next = current === 'dark' ? 'light' : 'dark';
+
+    if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.startViewTransition(() => {
+        applyTheme(next);
+      });
+    } else {
+      applyTheme(next);
+    }
+  }
+
   async function boot() {
+    applyTheme(localStorage.getItem('theme'));
     charts.init();
     el.apiBase.value = api.getApiBase();
     if (el.backToApp) {
@@ -204,6 +245,16 @@
   if (window.matchMedia) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawCharts);
   }
+
+  document.querySelectorAll('.theme-toggle').forEach((btn) => {
+    btn.addEventListener('click', toggleTheme);
+  });
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'theme') {
+      applyTheme(e.newValue);
+    }
+  });
 
   el.loginForm.addEventListener('submit', submitLogin);
   el.apiSave.addEventListener('click', saveApiBase);

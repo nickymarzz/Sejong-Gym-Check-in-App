@@ -11,6 +11,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import ScreenWrapper from '../components/ScreenWrapper';
 import Header from '../components/Header';
 import { theme } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 import { initialCheckInHistory } from '../data/mockCheckInHistory';
 import { AuthContext } from '../context/AuthContext';
 import { checkInService } from '../services';
@@ -68,6 +69,7 @@ function formatDuration(item) {
 
 export default function HistoryScreen() {
   const { currentUser, logout } = useContext(AuthContext);
+  const { theme } = useTheme();
   const [items, setItems] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,7 @@ export default function HistoryScreen() {
   const load = useCallback(async () => {
     try {
       const res = await checkInService.getHistory();
-      if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      if (res && res.success && Array.isArray(res.data)) {
         setItems(res.data);
         return;
       }
@@ -89,6 +91,8 @@ export default function HistoryScreen() {
   useFocusEffect(
     useCallback(() => {
       load().finally(() => setLoading(false));
+      const interval = setInterval(load, 3500);
+      return () => clearInterval(interval);
     }, [load])
   );
 
@@ -101,11 +105,11 @@ export default function HistoryScreen() {
   const renderItem = ({ item }) => {
     const s = statusStyle(item.status);
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
         <View style={styles.rowBetween}>
           <View>
-            <Text style={styles.date}>{item.dateLabel}</Text>
-            <Text style={styles.gym}>{item.gymName}</Text>
+            <Text style={[styles.date, { color: theme.colors.text }]}>{item.dateLabel}</Text>
+            <Text style={[styles.gym, { color: theme.colors.textSecondary }]}>{item.gymName}</Text>
           </View>
           <View style={[styles.statusPill, { backgroundColor: s.bg }]}>
             <MaterialCommunityIcons
@@ -118,10 +122,10 @@ export default function HistoryScreen() {
           </View>
         </View>
 
-        <View style={styles.times}>
+        <View style={[styles.times, { backgroundColor: theme.colors.bg }]}>
           <View style={styles.timeBlock}>
-            <Text style={styles.timeLabel}>IN</Text>
-            <Text style={styles.timeValue}>{item.checkInTime}</Text>
+            <Text style={[styles.timeLabel, { color: theme.colors.textMuted }]}>IN</Text>
+            <Text style={[styles.timeValue, { color: theme.colors.text }]}>{item.checkInTime}</Text>
           </View>
           <MaterialCommunityIcons
             name="arrow-right"
@@ -129,13 +133,13 @@ export default function HistoryScreen() {
             color={theme.colors.textMuted}
           />
           <View style={styles.timeBlock}>
-            <Text style={styles.timeLabel}>OUT</Text>
-            <Text style={styles.timeValue}>{item.checkOutTime || '—'}</Text>
+            <Text style={[styles.timeLabel, { color: theme.colors.textMuted }]}>OUT</Text>
+            <Text style={[styles.timeValue, { color: theme.colors.text }]}>{item.checkOutTime || '—'}</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
           <View style={styles.durationBlock}>
-            <Text style={styles.timeLabel}>DURATION</Text>
-            <Text style={styles.durationValue}>
+            <Text style={[styles.timeLabel, { color: theme.colors.textMuted }]}>DURATION</Text>
+            <Text style={[styles.durationValue, { color: theme.colors.primary }]}>
               {formatDuration(item)}
             </Text>
           </View>
@@ -145,7 +149,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
       <Header
         userData={currentUser}
         onLogout={logout}
@@ -155,8 +159,8 @@ export default function HistoryScreen() {
       <ScreenWrapper padTop={false} padBottom={false} scroll={false}>
         <View style={styles.listHeader}>
           <View>
-            <Text style={styles.title}>Check-in History</Text>
-            <Text style={styles.sub}>{items.length} gym visits</Text>
+            <Text style={[styles.title, { color: theme.colors.text }]}>Check-in History</Text>
+            <Text style={[styles.sub, { color: theme.colors.textMuted }]}>{items.length} gym visits</Text>
           </View>
         </View>
 

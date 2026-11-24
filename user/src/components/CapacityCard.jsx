@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 export default function CapacityCard({ gymData, isLive = false }) {
+  const { theme } = useTheme();
   if (!gymData) return null;
   const pct =
     gymData.capacity > 0
@@ -72,10 +74,10 @@ export default function CapacityCard({ gymData, isLive = false }) {
   const available = Math.max(0, gymData.capacity - gymData.currentOccupancy);
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       <View style={styles.cardHeader}>
         <View style={styles.titleWithLive}>
-          <Text style={styles.cardTitle}>Current Gym Capacity</Text>
+          <Text style={[styles.cardTitle, { color: theme.colors.textSecondary }]}>Current Gym Capacity</Text>
           {isLive ? (
             <View style={styles.liveBadge}>
               <View style={styles.liveDot} />
@@ -92,14 +94,14 @@ export default function CapacityCard({ gymData, isLive = false }) {
 
       <View style={styles.capacityDisplay}>
         <View style={styles.numbersRow}>
-          <Text style={styles.current}>{gymData.currentOccupancy}</Text>
-          <Text style={styles.divider}>/</Text>
-          <Text style={styles.max}>{gymData.capacity}</Text>
+          <Text style={[styles.current, { color: theme.colors.primary }]}>{gymData.currentOccupancy}</Text>
+          <Text style={[styles.divider, { color: theme.colors.textMuted }]}>/</Text>
+          <Text style={[styles.max, { color: theme.colors.textSecondary }]}>{gymData.capacity}</Text>
         </View>
-        <Text style={styles.percent}>{pct}% occupied</Text>
+        <Text style={[styles.percent, { color: theme.colors.textSecondary }]}>{pct}% occupied</Text>
       </View>
 
-      <View style={styles.progressBg}>
+      <View style={[styles.progressBg, { backgroundColor: theme.colors.border }]}>
         <View
           style={[
             styles.progressFill,
@@ -112,15 +114,15 @@ export default function CapacityCard({ gymData, isLive = false }) {
       </View>
 
       <View style={styles.metaRow}>
-        <View style={styles.metaItem}>
-          <Text style={styles.metaLabel}>Hours</Text>
-          <Text style={styles.metaValue}>
+        <View style={[styles.metaItem, { backgroundColor: theme.colors.bg }]}>
+          <Text style={[styles.metaLabel, { color: theme.colors.textMuted }]}>Hours</Text>
+          <Text style={[styles.metaValue, { color: theme.colors.text }]}>
             {gymData.openingHours.open} — {gymData.openingHours.close}
           </Text>
         </View>
-        <View style={styles.metaItem}>
-          <Text style={styles.metaLabel}>Available</Text>
-          <Text style={styles.metaValue}>{available} spots</Text>
+        <View style={[styles.metaItem, { backgroundColor: theme.colors.bg }]}>
+          <Text style={[styles.metaLabel, { color: theme.colors.textMuted }]}>Available</Text>
+          <Text style={[styles.metaValue, { color: theme.colors.text }]}>{available} spots</Text>
         </View>
       </View>
     </View>
