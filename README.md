@@ -132,7 +132,7 @@ sequenceDiagram
 
 | Capability / Factor | SGC (Passive NFC Sticker) | Traditional Turnstiles / Kiosks | Paper Sign-in Sheets | Static / Dynamic QR Displays |
 | :--- | :--- | :--- | :--- | :--- |
-| **Hardware Investment** | **~₩300 (~$0.20)** per sticker | $3,000 – $10,000 per gate | Negligible | $150 – $400 display hardware |
+| **Hardware Investment** | **$0.20** per sticker | $3,000 – $10,000 per gate | Negligible | $150 – $400 display hardware |
 | **Student Privacy** | **Zero student data exposed** (JWT in app) | Card cloning / badge theft risk | **Zero privacy** (names & IDs visible to all) | Vulnerable to shoulder-surfing |
 | **Real-Time Capacity** | **Instant live telemetry** (SSE + polling) | Live via proprietary server | **None** (requires manual headcounts) | Delayed web hooks |
 | **Anti-Fraud / Anti-Spoof** | **Atomic server-side lock** + JWT session | Physical barrier | No verification (fake names) | High fraud risk (shared screenshots) |
