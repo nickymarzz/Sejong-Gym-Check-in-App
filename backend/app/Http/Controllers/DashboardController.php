@@ -166,7 +166,7 @@ class DashboardController extends Controller
         }
 
         $checkIn->checkOut();
-        $gym->decrementOccupancy();
+        $gym->releaseOccupancySlot();
 
         User::where('userId', $checkIn->userId)->update([
             'checkedIn' => false,

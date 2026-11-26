@@ -29,8 +29,9 @@ export async function markAllRead() {
 
 export async function unreadCount() {
   const res = await apiRequest('/notifications/unread-count', { method: 'GET' });
-  if (res.success && res.data?.unreadCount !== undefined) {
-    return { success: true, data: res.data.unreadCount };
+  const count = typeof res.data === 'number' ? res.data : res.data?.unreadCount;
+  if (res.success && typeof count === 'number') {
+    return { success: true, data: count };
   }
   return { success: false, data: 0 };
 }

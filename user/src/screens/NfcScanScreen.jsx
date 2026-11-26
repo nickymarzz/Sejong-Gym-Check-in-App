@@ -31,6 +31,8 @@ import { delay } from '../services/mock/_utils';
 export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
   const [phase, setPhase] = useState('scanning'); // scanning | detected | invalid | timeout | disabled
   const [msg, setMsg] = useState('Hold your phone against the SGC-GYM sticker…');
+  const [payload, setPayload] = useState(null);
+  const [tagTech, setTagTech] = useState(null);
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const mounted = useRef(true);
@@ -38,6 +40,9 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
 
   const handleScanResult = useCallback((result) => {
     if (!mounted.current) return;
+
+    if (result.payload) setPayload(result.payload);
+    if (result.tagTech) setTagTech(result.tagTech);
 
     if (result.success && result.payload === EXPECTED_PAYLOAD) {
       setPhase('detected');
@@ -69,6 +74,8 @@ export default function NfcScanScreen({ mode = 'in', onComplete, onCancel }) {
   const initiateScan = useCallback(() => {
     setPhase('scanning');
     setMsg('Hold your phone against the SGC-GYM sticker…');
+    setPayload(null);
+    setTagTech(null);
     nfcService.startScan(handleScanResult);
   }, [handleScanResult]);
 

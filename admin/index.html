@@ -140,8 +140,11 @@
         <section class="card panel" aria-labelledby="inside-title">
           <div class="panel-head">
             <h2 id="inside-title">Inside now <span id="inside-count" class="count"></span></h2>
-            <input id="inside-filter" type="search" placeholder="Filter by name or ID"
-                   aria-label="Filter the people inside" autocomplete="off">
+            <div class="panel-actions">
+              <input id="inside-filter" type="search" placeholder="Filter by name or ID"
+                     aria-label="Filter the people inside" autocomplete="off">
+              <button id="inside-checkout-all" class="btn btn-danger" type="button" hidden>Check out all</button>
+            </div>
           </div>
           <div id="inside-table" class="table-wrap table-scroll"></div>
           <p id="inside-empty" class="empty" hidden></p>

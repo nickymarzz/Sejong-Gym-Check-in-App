@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Facades\DB;
 use MongoDB\Laravel\Eloquent\Model;
 
 class Gym extends Model
@@ -87,15 +88,103 @@ class Gym extends Model
         return $this->currentOccupancy >= $this->capacity;
     }
 
+    /**
+     * Detect whether the connected MongoDB deployment supports multi-document transactions
+     * (replica set member or mongos), avoiding CommandException on standalone servers.
+     */
+    public static function supportsTransactions(): bool
+    {
+        static $supported = null;
+        if ($supported !== null) {
+            return $supported;
+        }
+
+        try {
+            $hello = DB::connection('mongodb')->getMongoDB()->command(['hello' => 1])->toArray()[0] ?? null;
+            $supported = $hello !== null && (isset($hello['setName']) || ($hello['msg'] ?? null) === 'isdbgrid');
+        } catch (\Throwable) {
+            $supported = false;
+        }
+
+        return $supported;
+    }
+
+    /**
+     * Atomically claim one occupancy slot when currentOccupancy < capacity.
+     *
+     * @param \MongoDB\Driver\Session|null $session
+     */
+    public function claimOccupancySlot(?object $session = null): ?int
+    {
+        $collection = DB::connection($this->connection)->getMongoDB()->selectCollection($this->getTable());
+        $options = [
+            'returnDocument' => \MongoDB\Operation\FindOneAndUpdate::RETURN_DOCUMENT_AFTER,
+        ];
+        if ($session !== null) {
+            $options['session'] = $session;
+        }
+
+        $updated = $collection->findOneAndUpdate(
+            [
+                'gymId' => $this->gymId,
+                '$expr' => ['$lt' => ['$currentOccupancy', '$capacity']],
+            ],
+            [
+                '$inc' => ['currentOccupancy' => 1],
+                '$set' => ['updatedAt' => new \MongoDB\BSON\UTCDateTime((int) (microtime(true) * 1000))],
+            ],
+            $options
+        );
+
+        if (!$updated) {
+            return null;
+        }
+
+        $this->currentOccupancy = (int) $updated['currentOccupancy'];
+        return $this->currentOccupancy;
+    }
+
+    /**
+     * Atomically release one occupancy slot when currentOccupancy > 0.
+     *
+     * @param \MongoDB\Driver\Session|null $session
+     */
+    public function releaseOccupancySlot(?object $session = null): int
+    {
+        $collection = DB::connection($this->connection)->getMongoDB()->selectCollection($this->getTable());
+        $options = [
+            'returnDocument' => \MongoDB\Operation\FindOneAndUpdate::RETURN_DOCUMENT_AFTER,
+        ];
+        if ($session !== null) {
+            $options['session'] = $session;
+        }
+
+        $updated = $collection->findOneAndUpdate(
+            [
+                'gymId' => $this->gymId,
+                'currentOccupancy' => ['$gt' => 0],
+            ],
+            [
+                '$inc' => ['currentOccupancy' => -1],
+                '$set' => ['updatedAt' => new \MongoDB\BSON\UTCDateTime((int) (microtime(true) * 1000))],
+            ],
+            $options
+        );
+
+        $this->currentOccupancy = $updated ? (int) $updated['currentOccupancy'] : 0;
+        return $this->currentOccupancy;
+    }
+
     public function incrementOccupancy(): void
     {
-        $this->currentOccupancy = min($this->currentOccupancy + 1, $this->capacity);
-        $this->save();
+        if ($this->claimOccupancySlot() === null) {
+            $this->currentOccupancy = min($this->currentOccupancy + 1, $this->capacity);
+            $this->save();
+        }
     }
 
     public function decrementOccupancy(): void
     {
-        $this->currentOccupancy = max($this->currentOccupancy - 1, 0);
-        $this->save();
+        $this->releaseOccupancySlot();
     }
 }

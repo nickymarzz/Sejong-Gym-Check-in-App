@@ -536,6 +536,13 @@ img.brand-mark {
 
 .count { color: var(--ink-2); font-size: 14px; font-weight: 400; }
 
+.panel-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .panel-head input[type="search"] { width: 200px; max-width: 100%; }
 
 .settings-form { display: grid; gap: 14px; }

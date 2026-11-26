@@ -18,6 +18,7 @@
 //   simulateScan(outcomeType, callback)
 
 import { Platform } from 'react-native';
+import { CONFIG } from '../../config';
 import { delay } from '../mock/_utils';
 
 export const EXPECTED_PAYLOAD = 'SGC-GYM';
@@ -211,6 +212,18 @@ export async function startScan(onTagDetected) {
   }
 
   // --- Fallback for Emulators, Web, or Devices without NFC hardware ---
+  if (!((typeof __DEV__ !== 'undefined' && __DEV__) || CONFIG.USE_MOCK)) {
+    scanning = false;
+    onTagDetected &&
+      onTagDetected({
+        success: false,
+        error: 'nfc_unsupported',
+        message: 'NFC is not supported on this device.',
+        isHardware: false,
+      });
+    return { scanning: false };
+  }
+
   scanTimer = setTimeout(() => {
     scanning = false;
     scanTimer = null;

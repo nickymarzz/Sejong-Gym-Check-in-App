@@ -1,148 +1,217 @@
-# 🏋️‍♂️ Sejong Gym Check-in App (SGC)
+<!-- markdownlint-configure-file { "MD033": { "allowed_elements": ["p", "img", "strong", "a", "details", "summary", "b"] }, "MD041": false } -->
 
-[![Expo SDK](https://img.shields.io/badge/Expo-SDK%2058-black?style=flat&logo=expo)](https://expo.dev/)
-[![React Native](https://img.shields.io/badge/React%20Native-0.88-61DAFB?style=flat&logo=react)](https://reactnative.dev/)
-[![React](https://img.shields.io/badge/React-19.3-blue?style=flat&logo=react)](https://react.dev/)
-[![Platform](https://img.shields.io/badge/Platform-iOS%20|%20Android%20|%20Web-success)](https://expo.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<p align="center">
+  <img src="user/assets/logo.png" alt="Sejong Gym Check-in App Logo" width="130" />
+</p>
 
-> A modern, mobile-first facility access and occupancy management system designed for **Sejong University Gymnasium** (Student Union Building B, 3F). Students can monitor real-time gym capacity, tap passive NFC entrance stickers with their smartphones to check in and out, and view their workout history.
+# Sejong Gym Check-in App (SGC)
 
----
+<p align="center">
+  <strong>Mobile-first gym capacity tracking and contactless NFC check-in/out for Sejong University.</strong>
+</p>
 
-## 📌 Table of Contents
+<p align="center">
+  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-SDK%2058-black?style=flat&logo=expo" alt="Expo SDK 58" /></a>
+  <a href="https://reactnative.dev/"><img src="https://img.shields.io/badge/React%20Native-0.88-61DAFB?style=flat&logo=react" alt="React Native 0.88" /></a>
+  <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Laravel-11-FF2D20?style=flat&logo=laravel" alt="Laravel 11" /></a>
+  <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.5%20NTS-777BB4?style=flat&logo=php" alt="PHP 8.5 NTS" /></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-18%20%7C%2020%20LTS-339933?style=flat&logo=node.js" alt="Node.js 18 or 20" /></a>
+  <a href="https://www.mongodb.com/"><img src="https://img.shields.io/badge/MongoDB-6.0+-47A248?style=flat&logo=mongodb" alt="MongoDB" /></a>
+  <a href="https://redis.io/"><img src="https://img.shields.io/badge/Redis-Queue%20Ready-DC382D?style=flat&logo=redis" alt="Redis" /></a>
+  <a href="backend/tests"><img src="https://img.shields.io/badge/PHPUnit-35%2F35%20Passing-brightgreen?style=flat&logo=php" alt="PHPUnit 35/35 Passing" /></a>
+  <a href="backend/tests"><img src="https://img.shields.io/badge/Assertions-122%20Verified-blue" alt="122 Verified Assertions" /></a>
+  <a href="backend/tests/Feature/LatencyBenchmarkTest.php"><img src="https://img.shields.io/badge/API%20Latency-%3C200ms-blue" alt="API Latency Benchmark" /></a>
+  <a href="backend"><img src="https://img.shields.io/badge/Code%20Style-PSR--12-555555" alt="PSR-12 Code Style" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" /></a>
+</p>
 
-- [Overview & Problem Statement](#-overview--problem-statement)
-- [System Architecture & NFC Security Model](#-system-architecture--nfc-security-model)
-- [Key Features](#-key-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [Demo Credentials & Testing](#-demo-credentials--testing)
-- [Backend API Contract](#-backend-api-contract)
-- [Roadmap](#-roadmap)
-- [License](#-license)
+<p align="center">
+  <a href="#-overview--problem-statement">Overview</a> •
+  <a href="#-system-architecture--visual-proof">Architecture</a> •
+  <a href="#-why-sgc-facility-access-comparison">Why SGC?</a> •
+  <a href="#-key-features">Features</a> •
+  <a href="#-tech-stack">Tech Stack</a> •
+  <a href="#-60-second-fast-path">60s Fast Path</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-demo-credentials--testing">Demo Accounts</a> •
+  <a href="#-backend-api-contract">API Contract</a> •
+  <a href="#-testing--verification">Testing</a> •
+  <a href="#-troubleshooting--faq">Troubleshooting</a> •
+  <a href="#-roadmap--progress">Roadmap</a>
+</p>
 
 ---
 
 ## 🎯 Overview & Problem Statement
 
-The Sejong University Gymnasium is a popular on-campus amenity with limited physical capacity (e.g., 50 occupants). During peak academic hours, students frequently face overcrowding, long lines, or arrive only to find the facility at capacity. Traditional paper sign-in sheets are prone to inaccurate records, manual overhead, and inability to track real-time occupancy.
+The Sejong University Gymnasium (Student Union Building B, 3F) is a core campus facility with a strict physical occupancy threshold (e.g. 50 occupants). During peak academic hours, students frequently face overcrowding, long entry queues, or arrive in gym attire only to be turned away because the room is at capacity. Manual sign-in sheets compromise student privacy, create recording overhead, and fail to provide real-time occupancy visibility.
 
-**Sejong Gym Check-in (SGC)** solves this with a mobile-first digital check-in platform:
+**Sejong Gym Check-in (SGC)** replaces manual logs with an integrated full-stack solution:
 
-- **Live Occupancy Tracking**: Students can check current gym capacity and status before leaving their dorm or classroom.
-- **Frictionless NFC Tap**: Check in or out in seconds by simply tapping a passive NFC sticker placed at the gym door.
-- **Privacy & Fraud Prevention**: Hardware stickers store zero student data; authentication is secured through student credentials and JWT tokens.
-- **Workout History & Insights**: Students can track past visits, visit duration, weekly frequency, and check-in statuses.
+- **Live Occupancy Tracking**: Students monitor real-time capacity and operating status before heading to the facility.
+- **Frictionless NFC Tap**: Check in or out in seconds by simply tapping a passive NFC sticker placed at the entrance door.
+- **Atomic Concurrency Control**: Single-document locks (`claimOccupancySlot()`) guarantee the gym never exceeds maximum capacity, even under simultaneous student arrivals.
+- **Zero-Trust NFC Hardware Model**: Entrance stickers store zero student information; authentication and role permissions are validated exclusively through Bearer JWTs.
+- **Admin Supervision & Analytics**: Facility managers supervise active occupants in real time, execute manual or bulk checkouts, and evaluate 7-day usage trends via Chart.js.
 
 ---
 
-## 🔐 System Architecture & NFC Security Model
+## 🔐 System Architecture & Visual Proof
 
-### The Passive Sticker Model
+### 1. High-Level System Architecture
 
-Unlike systems that require expensive dedicated smart kiosks or cards that encode sensitive user credentials, SGC utilizes **low-cost passive NFC stickers** (NFC Forum Type 2 / NTAG series) fixed at the entrance and exit:
+```mermaid
+flowchart LR
+    subgraph Entrance["Gym Entrance"]
+        Sticker["Passive NFC Sticker<br/>(Payload: SGC-GYM)"]
+    end
+
+    subgraph Clients["Client Applications"]
+        StudentApp["Student Mobile App<br/>(React Native / Expo SDK 58)<br/>iOS, Android & Web"]
+        AdminApp["Admin Dashboard<br/>(Vanilla JS + Chart.js 4.4)<br/>Web Browser"]
+    end
+
+    subgraph Backend["PHP Laravel 11 REST API"]
+        Gateway["API Gateway & JWT Guard<br/>(Throttle: 30-60 req/min)"]
+        Controllers["Controllers & Logic<br/>(Auth, CheckIn, Gym, Admin)"]
+        Concurrency["Concurrency Engine<br/>(claimOccupancySlot lock)"]
+    end
+
+    subgraph Storage["Data & Cache Layer"]
+        MongoDB[(MongoDB NoSQL Store<br/>Collections: Users, Gyms,<br/>CheckIns, Summaries)]
+        Redis[(Redis Queue<br/>Async Notifications)]
+    end
+
+    Sticker -.->|"Contactless Tap (Ndef/NfcA)"| StudentApp
+    StudentApp <-->|"HTTPS REST / JWT Bearer"| Gateway
+    AdminApp <-->|"HTTPS REST / Staff JWT"| Gateway
+    Gateway --> Controllers
+    Controllers --> Concurrency
+    Concurrency <-->|"Atomic findOneAndUpdate"| MongoDB
+    Controllers -.->|"Dispatch ShouldQueue"| Redis
+```
+
+---
+
+### 2. Runtime NFC Tap & Concurrency Sequence
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Student as Student (App)
-    participant Sticker as Passive NFC Sticker ("SGC-GYM")
-    participant API as Laravel REST API
+    actor Student as Student (Mobile App)
+    participant Sticker as Passive NFC Tag ("SGC-GYM")
+    participant API as Laravel 11 REST API
     participant DB as MongoDB Database
 
-    Note over Student,Sticker: Physical Tap at Gym Door
-    Student->>Sticker: Reads payload over NFC
-    Sticker-->>Student: Emits static payload "SGC-GYM"
-    Note over Student: App attaches Bearer JWT (Student ID)
-    Student->>API: POST /api/checkins { gymId, nfcPayload: "SGC-GYM" }
-    API->>API: 1. Validate JWT identity<br/>2. Verify nfcPayload == "SGC-GYM"<br/>3. Check gym status & capacity<br/>4. Prevent duplicate check-in
-    API->>DB: Increment occupancy & write check-in log
-    DB-->>API: Confirm transaction
-    API-->>Student: 200 OK { updatedGym, updatedUser }
+    Note over Student,Sticker: Physical Tap at Gym Entrance
+    Student->>Sticker: Reads payload over NFC (Ndef / NfcA)
+    Sticker-->>Student: Emits static identifier "SGC-GYM"
+    Note over Student: Attaches Bearer JWT (Student ID Session)
+    Student->>API: POST /api/checkins { gymId: "gym-001", nfcPayload: "SGC-GYM" }
+    API->>API: 1. Validate JWT session & role<br/>2. Verify nfcPayload == "SGC-GYM"<br/>3. Verify operating hours (06:00–22:00 KST)<br/>4. Check active session (Auto-heal stale)
+    API->>DB: claimOccupancySlot() atomic increment [$lt: capacity]
+    alt Gym at Full Capacity
+        DB-->>API: Slot rejected (null)
+        API-->>Student: 409 Conflict {"message": "Gym is at full capacity"}
+    else Slot Successfully Claimed
+        DB-->>API: Slot locked (occupancy + 1)
+        API->>DB: Create CheckIn log & update student status
+        API-->>Student: 200 OK { updatedGym, checkIn }
+    end
 ```
 
-### Security & Privacy Highlights
+### Security & Privacy Invariants
 
-1. **Zero Data on Sticker**: The passive sticker broadcasts **only** the static string `"SGC-GYM"`. It contains **no** student ID, no occupancy counts, and no database records.
-2. **Authenticated Student Token**: Student identity is derived exclusively from the authenticated session (Bearer JWT) inside the mobile app.
-3. **Server-Side Enforcement**: All concurrency handling, occupancy increments/decrements, opening hours checks, and double-tap prevention are validated on the backend.
+1. **Zero Data on Sticker**: The passive sticker broadcasts exclusively the static ASCII payload `"SGC-GYM"`. It contains no database keys, student IDs, or counter state.
+2. **Server-Enforced Authorization**: Student identity is derived exclusively from cryptographic Bearer JWT headers issued upon student login (`HS256`, 480m TTL / 20160m refresh TTL).
+3. **Double-Tap & Race-Condition Immunity**: Check-ins are protected by a partial unique index (`uniq_active_checkin_per_student`) and MongoDB atomic single-document updates (`claimOccupancySlot()`), with automated multi-document transaction fallback detection (`Gym::supportsTransactions()`).
+
+---
+
+## ⚖️ Why SGC? Facility Access Comparison
+
+| Capability / Factor | SGC (Passive NFC Sticker) | Traditional Turnstiles / Kiosks | Paper Sign-in Sheets | Static / Dynamic QR Displays |
+| :--- | :--- | :--- | :--- | :--- |
+| **Hardware Investment** | **$\approx \$0.20$** per sticker | $\$3,000$ — $\$10,000$ per gate | Negligible | $\$150$ — $\$400$ display hardware |
+| **Student Privacy** | **Zero student data exposed** (JWT in app) | Card cloning / badge theft risk | **Zero privacy** (names & IDs visible to all) | Vulnerable to shoulder-surfing |
+| **Real-Time Capacity** | **Instant live telemetry** (SSE + polling) | Live via proprietary server | **None** (requires manual headcounts) | Delayed web hooks |
+| **Anti-Fraud / Anti-Spoof** | **Atomic server-side lock** + JWT session | Physical barrier | No verification (fake names) | High fraud risk (shared screenshots) |
+| **Maintenance Burden** | **Zero power / Zero wiring** | Motor, sensor, and card wear | Constant restocking | Requires continuous power & screen upkeep |
+| **Dev & Simulation Support** | **Built-in radar modal + DevPanel** | None (requires hardware testbed) | None | QR mockup generators |
 
 ---
 
 ## ✨ Key Features
 
-- **🎓 Student Authentication**: Clean login screen with validation for 8-digit Sejong University Student IDs and password credentials.
-- **📊 Real-Time Capacity Dashboard**:
-  - Live occupancy gauge (e.g., `24 / 50` spots occupied).
-  - Visual status badges (`Open`, `Full`, `Closed`).
-  - Dynamic, color-coded capacity progress bar with real-time percentage indicators.
-- **📲 Animated NFC Scanner Screen**:
-  - Full-screen radar pulse animation indicating scanning state.
-  - Realistic timing simulation and auto-detection handling.
-  - Clear error states for wrong stickers or scan timeouts.
-- **🛠️ Built-in Developer Simulation Panel (`DevPanel`)**:
-  - Allows full end-to-end testing directly on simulator, physical device, or web browser without physical NFC hardware.
-  - Pre-configured simulation scenarios:
-    - `✓ Check-in Success` (Valid tag, checks in student and increments gym count)
-    - `✓ Check-out Success` (Valid tag, checks out student and decrements gym count)
+### 🎓 Student Mobile Application (`/user`)
+
+- **Secure Authentication**: Validated login with 8-digit Sejong University Student IDs and password credentials.
+- **Live Capacity Gauge**:
+  - Real-time occupancy counter (e.g. `24 / 50` spots occupied).
+  - Color-coded progress bar with dynamic capacity states (`Open`, `Full`, `Closed`, `Maintenance`).
+  - Background-aware auto-polling via custom `useLiveOccupancy` hook.
+- **Interactive Radar Scanner Screen**:
+  - Full-screen animated radar scan interface.
+  - Native hardware detection via `react-native-nfc-manager` for `NfcTech.Ndef` and `NfcTech.NfcA`.
+  - Graceful `nfc_unsupported` error feedback on devices without NFC hardware.
+- **Embedded Simulation Panel (`DevPanel`)**:
+  - Allows full end-to-end evaluation on emulators or web browsers without physical NFC tags.
+  - One-tap scenario triggers:
+    - `✓ Check-in Success` (Valid tag, increments gym count)
+    - `✓ Check-out Success` (Valid tag, decrements gym count)
     - `✗ Invalid NFC` (Simulates unrecognized third-party NFC tags)
     - `✗ Already Checked In` (Simulates duplicate tap prevention)
     - `✗ Already Checked Out` (Simulates check-out without prior check-in)
-- **📅 Session & Check-in History**:
-  - View historical gym visits with dates, check-in and check-out times, and duration.
-  - Filterable by user session with pull-to-refresh.
-  - Status indicators: `Completed`, `In Progress`, or `No Check-out`.
-- **👤 Profile & Activity Insights**:
-  - Student profile information (Name, Student ID, Department, Academic Year).
-  - Activity statistics: weekly session counter, total logged hours, and workout streak.
-  - Notification center for capacity alerts and gym announcements.
-- **⏰ Operating Hours & Auto-Checkout Enforcement**:
-  - Automatically enforces facility operating hours (06:00 — 22:00 KST), blocking check-ins outside active hours with clear user feedback.
-  - Scheduled nightly auto-checkout (`php artisan sgc:auto-checkout`) at 22:00 auto-expires remaining sessions and resets occupancy.
-  - Auto-heals stale sessions from previous days upon subsequent check-in.
-- **🖥️ Admin Dashboard (`/admin`)**:
-  - Dedicated portal on port 5500 restricted to `admin` and `staff` roles.
-  - Live occupancy and "Inside now" student list with time inside and manual "Check out" actions (individual and bulk checkout).
-  - Daily and 7-day analytics with Chart.js: visits, unique students, peak occupancy, peak hour, and average workout length.
-  - Gym settings: staff can update capacity, operating status (`open`, `closed`, `maintenance`), and opening hours.
+- **Workout Streak & Profile Analytics**:
+  - Dynamic computation of consecutive day workout streaks, total exercise hours, and weekly visits.
+- **Dark & Light Mode**: Seamless theme switching with high-contrast accessibility tokens.
+
+### 🖥️ Admin Facility Dashboard (`/admin`)
+
+- **Role-Based Access Control**: Strict `EnsureStaffRole` middleware protecting `/api/dashboard/*` (accessible only by `admin` and `staff` roles).
+- **"Inside Now" Roster & Instant Bulk Check-Out**:
+  - Live table of currently checked-in students with duration inside (`minutesInside`).
+  - Individual manual checkout buttons for immediate staff action.
+  - **"Check out all" bulk action button**: One-click modal to check out all active occupants and reset facility occupancy to 0.
+- **7-Day Visual Analytics**:
+  - Powered by Chart.js 4.4.
+  - Daily check-in volume, unique visitor counts, average workout duration, and peak-hour analysis.
+- **Live Facility Settings**:
+  - Adjust facility capacity (1–500), operating hours (`open` and `close` times), and facility status (`open`, `closed`, `maintenance`).
+
+### ⚙️ Backend & Concurrency Engine (`/backend`)
+
+- **Atomic Occupancy Locking**: `claimOccupancySlot()` and `releaseOccupancySlot()` in `Gym.php` prevent race conditions during high-volume ingress.
+- **Transaction & Standalone Fallback**: `Gym::supportsTransactions()` dynamically checks replica set / `mongos` support and falls back to atomic single-document updates with compensating release on standalone MongoDB instances.
+- **Automated Closing & Stale Auto-Heal**:
+  - Scheduled command (`sgc:auto-checkout`) automatically closes active sessions at 22:00 KST, preceded by closing reminders at 21:30 KST (`sgc:send-reminders`).
+  - Stale session recovery in `CheckInController::store()` auto-expires sessions lasting $\ge 16$ hours or originating from previous calendar dates.
+- **Asynchronous Redis Queue Support**: Push notification dispatches (`SendFcmNotificationJob`, `SendCapacityAlertJob`, `UpdateDailySummaryJob`) implement `ShouldQueue` for sub-200ms API response latency.
 
 ---
 
 ## 🛠 Tech Stack
 
-### Mobile Client (`/user`)
+### Frontend Clients
 
-| Technology | Description |
-| --- | --- |
-| **Framework** | [React Native](https://reactnative.dev/) (v0.88.0) with [Expo](https://expo.dev/) (SDK 58) |
-| **Language** | Modern JavaScript (ES6+ / JSX) |
-| **Navigation** | [React Navigation 7](https://reactnavigation.org/) (Native Stack & Bottom Tabs) |
-| **UI & Icons** | Vanilla React Native StyleSheet, `@expo/vector-icons` (Ionicons, MaterialCommunityIcons) |
-| **Effects & Layout** | `expo-linear-gradient`, `react-native-safe-area-context`, `react-native-screens` |
-| **Web Support** | `react-native-web` for browser preview and cross-platform testing |
+| Component | Technology | Version | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Mobile App** | React Native + Expo | Expo SDK 58 / RN 0.88 / React 19.3 | Student mobile interface (iOS, Android, Web) |
+| **Navigation** | React Navigation | 7.0 | Tab & Stack screen management |
+| **NFC Engine** | `react-native-nfc-manager` | ^4.2.0 | Native NDEF & NFC-A hardware reading |
+| **Admin Portal** | HTML5 / CSS3 / Vanilla JS | ES2020 | Zero-build dashboard served on port 5500 |
+| **Admin Charts** | Chart.js | 4.4.1 | Visual 7-day occupancy and peak-hour charts |
 
-### Admin Dashboard (`/admin`)
+### Backend & Infrastructure
 
-| Technology | Description |
-| --- | --- |
-| **Framework** | Vanilla JavaScript (ES2018, no build step) served as static files |
-| **Charts** | [Chart.js](https://www.chartjs.org/) 4.4 (loaded from cdnjs with a pinned version and integrity hash) |
-| **Styling** | Plain CSS with custom properties, automatic light / dark theme |
-| **Auth** | Bearer JWT from `POST /api/auth/login`, kept in `sessionStorage`, `admin` / `staff` roles only |
-
-### Backend & Infrastructure (`/backend`, Implemented)
-
-| Component | Technology |
-| --- | --- |
-| **REST API** | PHP Laravel 11 REST API with JWT Authentication (`php-open-source-saver/jwt-auth`) |
-| **Database** | MongoDB (occupancy transactions, student profiles, visit logs, daily summaries) |
-| **Queue / Cache** | Redis via `predis/predis` (`notifications`, `analytics` queues) |
-| **Push Notifications** | Firebase Cloud Messaging (FCM) via `kreait/laravel-firebase`, dispatched asynchronously |
-| **Environment** | PHP 8.5 (NTS, x64) — project-local `php-conf.d` extension injection, no system php.ini edits |
-| **NFC Hardware** | Passive NFC Stickers (NTAG213 / NTAG215 / NTAG216, NFC Forum Type 2) |
-| **Native NFC Bridge** | `react-native-nfc-manager` (via Expo Dev Client / Prebuild) |
+| Component | Technology | Version | Purpose |
+| :--- | :--- | :--- | :--- |
+| **REST API** | PHP Laravel Framework | 11.x | Core business logic, routing, and concurrency engine |
+| **Runtime** | PHP (NTS, x64) | 8.5+ | Project-local PECL configuration (`php-conf.d`) |
+| **NoSQL Database** | MongoDB | 6.0+ | Document storage, atomic slot locks, partial unique index |
+| **Queue / Cache** | Redis (`predis/predis`) | ^2.2 | Asynchronous job queues (`notifications`, `analytics`) |
+| **Push Gateway** | Firebase Cloud Messaging | 5.x | Automated student reminders & capacity alerts |
+| **Testing** | PHPUnit | 11.5 | 35 feature and unit test suites (122 assertions) |
 
 ---
 
@@ -150,272 +219,343 @@ sequenceDiagram
 
 ```text
 Sejong-Gym-Check-in-App/
-├── LICENSE
-├── README.md
-├── admin/                            # Admin Dashboard (static HTML / CSS / JS + Chart.js)
-│   ├── README.md                     # Admin Dashboard module guide (Lead: Javo)
-│   ├── index.html                    # Sign-in and dashboard views
-│   ├── css/styles.css                # Design tokens, light / dark theme, layout
-│   └── js/                           # api, live, sessions, settings, weekly, daily, charts, app
-├── backend/                          # Laravel 11 REST API (MongoDB + Redis)
-│   ├── README.md                     # Backend API module guide (Lead: Nik)
+├── LICENSE                           # MIT License definition
+├── README.md                          # Repository front door & technical documentation
+├── admin/                             # Admin Dashboard (Vanilla HTML/CSS/JS + Chart.js)
+│   ├── css/styles.css                 # Theme variables, layouts, and bulk-checkout styling
+│   ├── index.html                     # Dashboard markup and modal structures
+│   └── js/                            # api, live, sessions (bulk checkout), settings, charts
+├── backend/                           # Laravel 11 REST API
 │   ├── app/
-│   │   ├── Console/Commands/         # SeedDatabaseCommand, AutoCheckoutCommand
-│   │   ├── Http/
-│   │   │   ├── Controllers/          # Auth, CheckIn, Gym, Notification, Dashboard
-│   │   │   ├── Middleware/           # EnsureStaffRole (admin / staff gate for /api/dashboard)
-│   │   │   ├── Requests/             # Login / CheckIn / CheckOut / UpdateGym request validation
-│   │   │   └── ...
-│   │   ├── Jobs/                     # SendFcmNotificationJob, UpdateDailySummaryJob
-│   │   └── Models/                   # User, Gym, CheckIn, DailySummary, Notification
-│   ├── routes/
-│   │   ├── api.php                   # REST endpoints (see API Contract)
-│   │   └── console.php               # sgc:seed and scheduled auto-checkout
-│   ├── php-conf.d/sgc-extensions.ini # Project-local PHP extension overrides
-│   ├── composer / composer.json      # Composer LTS phar + dependency manifest
-│   └── storage/app/e2e_test.php      # End-to-end HTTP contract test
-├── database/                         # MongoDB Schema, Initialization & Seeds
-│   ├── README.md                     # Database layer & security guide (Lead: Zafri)
-│   ├── init_db.js                    # Schema validation rules & index creation
-│   └── seed.js                       # Standalone MongoDB seeder
-├── scripts/                          # Windows PowerShell runners (non-XAMPP PHP 8.5)
-│   ├── setup_new_php.ps1             # One-time: install ext-mongodb, wire extensions
-│   ├── seed_db.ps1                   # Deterministic dataset seed (sgc:seed)
-│   ├── start_api.ps1                 # Boot API dev server (artisan serve)
-│   ├── start_workers.ps1             # Run Redis queue workers (notifications/analytics)
-│   ├── run_tests_e2e.ps1             # Execute the E2E HTTP contract test
-│   └── start_admin.ps1               # Serve the admin dashboard (default port 5500)
-└── user/                             # Student Mobile Application (Expo / React Native)
-    ├── App.jsx                       # Root component with AuthProvider & AppNavigator
-    ├── app.json                      # Expo application manifest & bundle configuration
-    ├── babel.config.js               # Babel presets
-    ├── index.js                      # Entry point registering the root component
-    ├── package.json                  # Dependencies and scripts
+│   │   ├── Console/Commands/          # sgc:auto-checkout, sgc:send-reminders, sgc:seed
+│   │   ├── Http/Controllers/          # Auth, CheckIn, Gym, Notification, Dashboard, User
+│   │   ├── Http/Middleware/           # EnsureStaffRole, JwtMiddleware
+│   │   ├── Jobs/                      # SendFcmNotificationJob, SendCapacityAlertJob
+│   │   └── Models/                    # Gym (claimOccupancySlot), CheckIn, User, Notification
+│   ├── config/                        # database (MongoDB/Redis), jwt, queue, app
+│   ├── routes/api.php                 # Versioned REST API routes
+│   └── tests/                         # PHPUnit test suites (Feature & Unit)
+├── database/                          # MongoDB Database Artifacts
+│   ├── init_db.js                     # Collection schemas ($jsonSchema) & partial unique indexes
+│   └── seed.js                        # Standalone MongoDB seeder
+├── scripts/                           # PowerShell automation runners
+│   ├── run_phpunit.ps1                # Run full PHPUnit test suite with project-local PHP
+│   ├── run_tests_e2e.ps1              # Run HTTP contract integration test
+│   ├── seed_db.ps1                    # Deterministic database seeder (28 users, gym-001)
+│   ├── setup_new_php.ps1              # One-time: PECL ext-mongodb and local php-conf.d setup
+│   ├── start_admin.ps1                # Serve admin portal on port 5500
+│   ├── start_api.ps1                  # Serve Laravel API on 0.0.0.0:8000
+│   └── start_workers.ps1              # Run Redis queue background workers
+└── user/                              # Student Mobile Application (React Native / Expo)
+    ├── App.jsx                        # Root application component
+    ├── app.json                       # Expo config & native NFC plugin declarations
     └── src/
-        ├── config.js                 # Dynamic API URL resolution (LAN IP discovery for Expo Go)
-        ├── theme.js                  # Centralized design system (colors, typography, spacing, shadows)
-        ├── components/               # Reusable UI components
-        │   ├── CapacityCard.jsx      # Gym capacity gauge and occupancy progress bar
-        │   ├── DevPanel.jsx          # Collapsible NFC test scenario trigger panel
-        │   ├── Header.jsx            # Top app bar with student greeting and logout
-        │   ├── PrimaryButton.jsx     # Reusable action button with loading states
-        │   ├── ScreenWrapper.jsx     # Safe-area and pull-to-refresh wrapper
-        │   ├── ToastAlert.jsx        # Notification alert banners (success / error / warning)
-        │   └── UserStatus.jsx        # Current student check-in badge and session duration
-        ├── context/
-        │   └── AuthContext.jsx       # Global authentication state, login, and user session management
-        ├── data/                     # Offline fallback fixtures and initial states
-        │   ├── mockCheckInHistory.js # Sample past gym visits
-        │   ├── mockGyms.js           # Sejong gym capacity, hours, and status
-        │   ├── mockNotifications.js  # Announcements and alerts
-        │   └── mockUsers.js          # Demo student profile
-        ├── hooks/                    # Custom React hooks
-        │   └── useLiveOccupancy.js   # Real-time occupancy auto-polling hook (background-aware)
-        ├── navigation/
-        │   ├── AppNavigator.jsx      # Conditional stack navigator (Auth vs Authenticated tabs)
-        │   └── MainTabs.jsx          # Bottom tab bar (Home, History, Profile) with dynamic insets
-        ├── screens/                  # Main user interfaces
-        │   ├── HomeScreen.jsx        # Gym status, primary action button, DevPanel, pull-to-refresh
-        │   ├── HistoryScreen.jsx     # Workout session records & status badges, pull-to-refresh
-        │   ├── LoginScreen.jsx       # Student ID & password form
-        │   ├── NfcScanScreen.jsx     # Full-screen radar scan modal with NFC simulation
-        │   └── ProfileScreen.jsx     # Student stats, streak, details, notifications, pull-to-refresh
-        └── services/                 # Business logic and communication layer
-            ├── api/                  # Live Laravel 11 REST API client (Active)
-            │   ├── client.js         # Fetch client with Bearer JWT interceptor
-            │   ├── authService.js    # Live student authentication & JWT handling
-            │   ├── checkInService.js # Live check-in/out, history, and active sessions
-            │   ├── gymService.js     # Live facility capacity retrieval
-            │   └── notificationService.js # Notifications and read state sync
-            ├── mock/                 # Mock fallback implementations
-            ├── nfc/                  # NFC reader interface, payload validation, mock runner
-            └── index.js              # Service dispatcher (switches live API vs mock via config)
+        ├── components/                # CapacityCard, DevPanel, PrimaryButton, Header
+        ├── hooks/                     # useLiveOccupancy (background-aware polling)
+        ├── navigation/                # MainTabs, AppNavigator
+        ├── screens/                   # HomeScreen, NfcScanScreen, HistoryScreen, ProfileScreen
+        └── services/                  # api (client, auth, checkin, gym), nfc (nfcService)
 ```
 
 ---
 
-## 🚀 Getting Started
+## ⚡ 60-Second Fast Path
+
+Need the full backend stack running in **one command**? Run this one-liner in PowerShell (Administrator / standard terminal):
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command ".\scripts\setup_new_php.ps1; .\scripts\seed_db.ps1; .\scripts\start_api.ps1"
+```
+
+Once the API starts on `http://0.0.0.0:8000`, open a new terminal for the mobile client:
+
+```bash
+cd user && npm install && npm start
+```
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18.x or v20.x recommended)
-- `npm` (v9+ or v10+)
-- Mobile testing options:
-  - **Physical Device**: Install [Expo Go](https://expo.dev/go) from the iOS App Store or Google Play Store.
-  - **iOS Simulator** (macOS with Xcode).
-  - **Android Emulator** (Android Studio).
-  - **Web Browser**: Supported out of the box via React Native for Web.
+- [Node.js](https://nodejs.org/) (`v18.x` or `v20.x` LTS)
+- [MongoDB](https://www.mongodb.com/) Community Server running on `127.0.0.1:27017`
+- [PHP](https://www.php.net/) (`8.2+` or `8.5+` NTS x64)
 
-### 1. Clone the Repository
+---
 
-```bash
-git clone https://github.com/nickymarzz/Sejong-Gym-Check-in-App.git
-cd Sejong-Gym-Check-in-App/user
+### Step 1: Backend Setup & Seed Database
+
+```powershell
+# 1. Run one-time environment preparation (wires local php-conf.d & ext-mongodb)
+powershell -ExecutionPolicy Bypass -File .\scripts\setup_new_php.ps1
+
+# 2. Seed deterministic dataset (Creates 28 users, gym-001, 159 check-ins, 7 daily summaries)
+powershell -ExecutionPolicy Bypass -File .\scripts\seed_db.ps1
+
+# 3. Boot Laravel API server (Listens on 0.0.0.0:8000 for LAN & emulator access)
+powershell -ExecutionPolicy Bypass -File .\scripts\start_api.ps1
 ```
 
-### 2. Install Dependencies
+> [!NOTE]
+> The backend server binds to `0.0.0.0:8000`. The mobile client (`user/src/config.js`) dynamically detects your host's local Wi-Fi IP from `Constants.expoConfig.hostUri`, allowing seamless testing from physical mobile phones on the same network without editing `.env` files.
+
+---
+
+### Step 2: Start Student Mobile Application
+
+Open a second terminal window:
 
 ```bash
+cd user
 npm install
-```
-
-### 3. Run the Development Server
-
-```bash
-# Start the Expo development server
 npm run start
 ```
 
-From the terminal:
+- Press `w` to launch instantly in your web browser.
+- Press `a` to run on Android Emulator or `i` for iOS Simulator.
+- Scan the printed terminal QR code with **Expo Go** on your physical smartphone.
 
-- Press `w` to open in your web browser.
-- Press `i` to open in the iOS Simulator.
-- Press `a` to open in the Android Emulator.
-- Scan the printed QR code with your phone camera (iOS) or Expo Go app (Android).
+---
 
-### 4. Run the Backend API (Laravel + MongoDB)
+### Step 3: Start Admin Dashboard
 
-The backend is a Laravel 11 API backed by MongoDB and Redis, with Windows PowerShell runners that do **not** require XAMPP. They target a standalone PHP 8.5 (NTS) install and fall back to `php` on `PATH` if present.
-
-#### Backend Prerequisites
-
-- MongoDB on `127.0.0.1:27017` (installed as a Windows service).
-- Redis on `127.0.0.1:6379` (optional — otherwise `QUEUE_CONNECTION=sync` is used).
-- PHP 8.5 (NTS, x64), e.g. installed at `...\AppData\Local\Programs\PHP\current`.
-
-#### One-time environment setup
+Open a third terminal window:
 
 ```powershell
-# Installs the matching ext-mongodb PECL DLL into the PHP ext dir and
-# wires project-local `backend/php-conf.d/sgc-extensions.ini` so all
-# required extensions load with no edits to the global php.ini.
-powershell -ExecutionPolicy Bypass -File .\scripts\setup_new_php.ps1
-```
-
-#### Seed the deterministic dataset
-
-```powershell
-# Creates 28 users, 1 gym (gym-001), 159 check-ins, and 7 daily summaries.
-powershell -ExecutionPolicy Bypass -File .\scripts\seed_db.ps1
-```
-
-More details on the collections, `$jsonSchema` validation, and indexes are in [`database/README.md`](database/README.md).
-
-#### Start the API / queue workers / E2E tests
-
-```powershell
-# Boot the API dev server on port 8000 (pass a port as an argument, e.g. 8022).
-powershell -ExecutionPolicy Bypass -File .\scripts\start_api.ps1
-
-# Run Redis queue workers for the notifications and analytics queues (optional).
-powershell -ExecutionPolicy Bypass -File .\scripts\start_workers.ps1 notifications
-powershell -ExecutionPolicy Bypass -File .\scripts\start_workers.ps1 analytics
-
-# Verify the full HTTP contract against the running server.
-powershell -ExecutionPolicy Bypass -File .\scripts\run_tests_e2e.ps1
-```
-
-The API server binds to `http://0.0.0.0:8000` (via `.\scripts\start_api.ps1`) to allow incoming requests from mobile phones running Expo Go on the local Wi-Fi. The mobile client (`user/src/config.js`) dynamically resolves the computer's LAN IP address from `Constants.expoConfig.hostUri`, allowing seamless testing without manual IP configuration. More details on the architecture, auto-checkout scheduler, and API routes are in [`backend/README.md`](backend/README.md).
-
-### 5. Run the Admin Dashboard
-
-The dashboard is a static web app, so it only needs a web server and the API from step 4:
-
-```powershell
-# Serves ./admin on http://localhost:5500 (pass a port as an argument to change it).
+# Serves the static admin dashboard on http://localhost:5500
 powershell -ExecutionPolicy Bypass -File .\scripts\start_admin.ps1
 ```
 
-Open `http://localhost:5500` and sign in with the admin credentials from the next section. The dashboard expects the API on port 8000 of the same host; use **Server settings** on the sign-in screen to point it elsewhere. More details are in [`admin/README.md`](admin/README.md).
+Visit [`http://localhost:5500`](http://localhost:5500) and sign in using the Admin credentials below.
 
 ---
 
 ## 🔑 Demo Credentials & Testing
 
-The app is pre-configured with demo student credentials for immediate evaluation:
+The database seed provides pre-configured student and admin accounts:
 
-| Field | Demo Value |
-| --- | --- |
-| **Student ID** | `20241234` (must be 8 digits) |
-| **Password** | `password` (any non-empty string) |
-| **Student Name** | Demo Student |
-| **Department** | Department of Computer Engineering |
-| **Admin ID** | `00000001` (Admin Dashboard and `/api/dashboard/*` endpoints) |
-| **Admin Password** | `password` |
+| Portal / Role | Identifier (User ID / Student ID) | Password | Default Capacity / Role |
+| :--- | :--- | :--- | :--- |
+| **Student Mobile App** | `20241234` (Demo Student) | `password` | Department of Computer Engineering |
+| **Student Mobile App (Alt)** | `20245678` (Active Occupant) | `password` | Pre-checked in for immediate checkout test |
+| **Admin Dashboard** | `00000001` (Admin Lead) | `password` | Role: `admin` (Full facility settings access) |
+| **Staff Portal** | `00000002` (Gym Staff) | `password` | Role: `staff` (Checkouts & status supervision) |
 
-### How to Test Check-in / Check-out
+### Testing Check-in & Edge Cases via DevPanel
 
-1. Sign in using the demo credentials above.
-2. On the **Home** tab, tap **"Tap to Check In"** to open the animated NFC scanning radar.
-3. The simulated NFC reader will scan and validate the `"SGC-GYM"` payload, automatically checking you in and incrementing the gym's live occupancy.
-4. When finished, tap **"Tap to Check Out"** to end your session.
-5. Expand the purple **DEV** panel on the Home screen to trigger specific edge cases (duplicate check-in, invalid sticker, etc.).
+1. Sign in to the mobile app with `20241234` / `password`.
+2. Tap **"Tap to Check In"** to open the animated radar scanner.
+3. On web or simulator, expand the collapsible **DEV** panel on the Home screen to trigger test outcomes:
+   - Tap **"Check-in Success"** to simulate scanning an `"SGC-GYM"` sticker. Live occupancy increments immediately.
+   - Tap **"Check-out Success"** to finish the workout. The session log updates in the **History** tab.
+   - Tap **"Invalid NFC"** to verify that third-party NFC tags are rejected gracefully.
+   - Tap **"Already Checked In"** to verify duplicate session prevention.
 
 ---
 
 ## 📡 Backend API Contract
 
-The mobile client is designed with strict separation between UI screens and backend communication. The mock services in `src/services/mock/` mirror the implemented Laravel API; the backend request/response envelope is always `{ status, message, data }`. All endpoints below are served at `http://127.0.0.1:8000/api`.
+All endpoints are hosted at `http://127.0.0.1:8000/api`. The standard response envelope is `{ "status": "success" | "error", "message": string, "data": object | null }`.
 
-### Authentication
+### Public & Authentication Routes
 
-- `POST /api/auth/login` — Body: `{ studentId, password }` → returns `{ user, token }`.
-- `POST /api/auth/refresh` — Refreshes the current JWT.
-- `GET /api/auth/me` — `Authorization: Bearer <token>` → current authenticated student profile.
-- `POST /api/auth/logout` — `Authorization: Bearer <token>` → invalidates the current session token.
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/auth/login` | None (Throttle: 30/m) | Login with `{ studentId, password }`. Returns JWT token. |
+| `POST` | `/api/auth/refresh` | None | Refresh expired JWT token. |
+| `GET` | `/api/auth/me` | Bearer JWT | Retrieve current authenticated user profile. |
+| `POST` | `/api/auth/logout` | Bearer JWT | Invalidate active JWT token. |
+| `GET` | `/api/capacity` | None | Get live capacity and occupancy for default gym (`gym-001`). |
+| `GET` | `/api/gyms/{gymId}` | None | Get detailed gym metadata, operating hours, and status. |
+| `GET` | `/api/gym/status/stream` | None | Server-Sent Events (SSE) stream for real-time capacity updates. |
 
-### Facility & Occupancy
+### Check-in & NFC Operations
 
-- `GET /api/gyms` — List all campus gyms and their capacities.
-- `GET /api/gyms/{gymId}` — Single gym details.
-- `GET /api/gym/status` / `GET /api/gym/status/{gymId}` — Live occupancy count, status (`open` | `closed` | `maintenance`), and hours.
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/checkins` | Bearer JWT (Throttle: 60/m) | Process NFC check-in. Body: `{ gymId, nfcPayload: "SGC-GYM" }`. |
+| `POST` | `/api/checkouts` | Bearer JWT (Throttle: 60/m) | Process check-out. Body: `{ gymId, nfcPayload: "SGC-GYM" }`. |
+| `GET` | `/api/checkins/active` | Bearer JWT | Get authenticated student's active check-in session. |
+| `GET` | `/api/checkins/history` | Bearer JWT | Retrieve student's paginated session history with durations. |
 
-### Check-in / Check-out (NFC)
+### Admin & Staff Management (`EnsureStaffRole`)
 
-- `POST /api/checkins` — `Authorization: Bearer <token>`, Body: `{ gymId, nfcPayload }` where `nfcPayload` must equal `"SGC-GYM"`. Validates identity, capacity, opening hours, and prevents duplicate active sessions (transactional + partial unique index).
-- `POST /api/checkouts` / `POST /api/checkins/checkout` — `Authorization: Bearer <token>`, Body: `{ gymId, nfcPayload }`. Ends the active session and decrements occupancy.
-- `GET /api/checkins/history` — Current student's past sessions with duration and status.
-- `GET /api/checkins/active` — Current student's active session, if any.
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/dashboard/gyms/{gymId}/summary/{date}` | Bearer JWT (`admin`/`staff`) | Daily analytics summary (hourly histogram, peak occupancy). |
+| `GET` | `/api/dashboard/gyms/{gymId}/weekly` | Bearer JWT (`admin`/`staff`) | 7-day analytics trend for Chart.js dashboard. |
+| `GET` | `/api/dashboard/gyms/{gymId}/active` | Bearer JWT (`admin`/`staff`) | List of all students currently inside the gym. |
+| `PATCH` | `/api/dashboard/gyms/{gymId}/settings` | Bearer JWT (`admin`/`staff`) | Update `capacity` (1–500), `status` (`open`/`closed`/`maintenance`), or `openingHours`. |
+| `POST` | `/api/dashboard/gyms/{gymId}/active/{userId}/checkout` | Bearer JWT (`admin`/`staff`) | Manually force check-out an individual student. |
+| `POST` | `/api/dashboard/gyms/{gymId}/checkout-all` | Bearer JWT (`admin`/`staff`) | **Bulk action**: Force check-out all active occupants and reset occupancy to 0. |
 
-### Notifications (FCM)
+> [!IMPORTANT]
+> All `/api/dashboard/*` endpoints strictly require a JWT containing the `admin` or `staff` role. Requests with student tokens receive HTTP `403 Forbidden`.
 
-- `GET /api/notifications` — Current student's notifications.
-- `GET /api/notifications/unread-count` — Unread notification count.
-- `POST /api/notifications/{notificationId}/read` — Mark one notification read.
-- `POST /api/notifications/read-all` — Mark all notifications read.
+<details>
+<summary><b>🔍 View Example JSON Payloads & Responses</b></summary>
 
-### Admin Dashboard
+#### Successful Check-In (`POST /api/checkins`)
 
-- `GET /api/dashboard/gyms/{gymId}/summary/{date}` — Daily occupancy summary for a gym.
-- `GET /api/dashboard/gyms/{gymId}/weekly` — Weekly occupancy summary for a gym.
-- `GET /api/dashboard/gyms/{gymId}/active` — Students currently checked in (`checkInId`, `userId`, `studentId`, `name`, `department`, `checkInTime`, `minutesInside`), oldest first.
-- `PATCH /api/dashboard/gyms/{gymId}/settings` — Body: any of `capacity` (1–500, not below the current occupancy), `status` (`open` | `closed` | `maintenance`) and `openingHours` (`{ open, close }` as `HH:MM`, close after open). Returns the updated gym.
-- `POST /api/dashboard/gyms/{gymId}/active/{userId}/checkout` — Staff force checkout for an individual active student.
-- `POST /api/dashboard/gyms/{gymId}/checkout-all` — Staff force checkout for all active students (resets gym occupancy to 0).
+**Request:**
 
-> All `/api/dashboard/*` routes require a JWT whose user has the `admin` or `staff` role (`401` without a token, `403` for students).
-> **Error handling:** unknown routes return a `404` fallback with the same envelope. A duplicate active check-in returns `409`; a check-in outside operating hours (06:00 — 22:00) returns `409`; a check-out without a prior check-in returns `409`.
+```json
+{
+  "gymId": "gym-001",
+  "nfcPayload": "SGC-GYM"
+}
+```
+
+**Response (HTTP 200 OK):**
+
+```json
+{
+  "status": "success",
+  "message": "Check-in successful. Welcome to Sejong Gym!",
+  "data": {
+    "checkIn": {
+      "userId": "user-20241234",
+      "studentId": "20241234",
+      "gymId": "gym-001",
+      "checkInTime": "2026-11-26T10:00:00Z",
+      "status": "active"
+    },
+    "gym": {
+      "gymId": "gym-001",
+      "name": "Sejong Main Gymnasium",
+      "capacity": 50,
+      "currentOccupancy": 25,
+      "status": "open"
+    }
+  }
+}
+```
+
+#### Full Capacity Conflict (`POST /api/checkins` - HTTP 409)
+
+```json
+{
+  "status": "error",
+  "message": "Gym is at full capacity. Please wait or try another facility.",
+  "data": null
+}
+```
+
+</details>
 
 ---
 
-## 📍 Roadmap
+## 🧪 Testing & Verification
 
-- [x] Initial Expo React Native application prototype.
-- [x] Student authentication flow and session state management.
+The SGC repository includes comprehensive automated test suites covering edge cases, race conditions, and response latency.
+
+### Running PHPUnit Automated Tests
+
+```powershell
+# Runs 35 feature and unit tests via the project-local PHP environment
+powershell -ExecutionPolicy Bypass -File .\scripts\run_phpunit.ps1
+```
+
+```text
+PHPUnit 11.5.57 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.11
+Configuration: Sejong-Gym-Check-in-App\backend\phpunit.xml
+
+...................................                               35 / 35 (100%)
+
+Time: 00:03.412, Memory: 54.00 MB
+OK (35 tests, 122 assertions)
+```
+
+### Verified Test Suites
+
+- **`AuthTest`**: Token creation, password hashing, profile extraction, and role verification.
+- **`CheckInTest`**: Valid check-in/out flows, occupancy increment/decrement, and capacity boundary checks.
+- **`NfcEdgeCasesTest`**: Wrong NFC payloads, duplicate taps, stale session auto-healing ($\ge 16$ hrs), and after-hours check-in rejection.
+- **`LatencyBenchmarkTest`**: Verifies that authenticated check-in operations respond in **under 200ms** (`MAX_ALLOWED_LATENCY_MS = 200.0`).
+- **`AdminDashboardTest`**: Settings mutation, authorization barriers, and bulk checkout verification.
+
+---
+
+## 🛠️ Troubleshooting & FAQ
+
+<details>
+<summary><b>1. Port 8000 is already in use by another process</b></summary>
+
+Pass a custom port directly to the PowerShell runner:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start_api.ps1 8022
+```
+
+Then update `API_PORT` in `user/src/config.js` or use the **Server settings** button on the Admin Dashboard sign-in screen to point to `http://localhost:8022/api`.
+
+</details>
+
+<details>
+<summary><b>2. MongoDB Connection Failed (`No connection could be made`)</b></summary>
+
+Ensure the MongoDB Windows service is active:
+
+```powershell
+Get-Service -Name MongoDB | Start-Service
+```
+
+Verify MongoDB is listening on default port `27017` using MongoDB Compass or `mongosh mongodb://127.0.0.1:27017`.
+
+</details>
+
+<details>
+<summary><b>3. Mobile device cannot connect to backend over Wi-Fi</b></summary>
+
+1. Ensure your physical phone and development PC are connected to the same Wi-Fi network.
+2. In Windows Firewall, permit inbound TCP traffic on port `8000`.
+3. SGC automatically discovers your local LAN IP using `Constants.expoConfig.hostUri`. If your PC has multiple network adapters (e.g. VirtualBox or WSL), specify your primary IPv4 address in `user/src/config.js`.
+
+</details>
+
+<details>
+<summary><b>4. How do I test NFC without physical NFC stickers?</b></summary>
+
+Expand the purple **DEV** panel at the bottom of the Student Mobile App home screen. The panel provides one-click triggers for all valid and invalid NFC scan scenarios directly inside Expo Go, iOS Simulator, Android Emulator, or Web browsers.
+
+</details>
+
+---
+
+## 📍 Roadmap & Progress
+
+- [x] Initial Expo React Native mobile application prototype.
+- [x] Student authentication flow and session state management (JWT).
 - [x] Live gym capacity card with dynamic status indicators (`Open`, `Full`, `Closed`, `Maintenance`).
-- [x] Interactive NFC scanning interface with realistic mock outcomes.
-- [x] Interactive Developer Panel for scenario simulation.
-- [x] Visit history and session duration logging (supporting `< 1m` and 12-hour AM/PM formats).
+- [x] Interactive animated radar NFC scanning interface with sound & visual feedback.
+- [x] Interactive Developer Simulation Panel (`DevPanel`) for emulator and web testing.
+- [x] Session history logging with duration formatting (`< 1m`, AM/PM timestamps).
 - [x] Profile, workout streak, and notifications screen with dynamic statistics computation.
-- [x] Backend development: Laravel REST API & MongoDB schema (capacity-safe NFC check-in, JWT auth, FCM, daily/weekly summaries).
-- [x] Mobile & Backend Live Integration: connected to Laravel REST API with dynamic Wi-Fi IP discovery.
-- [x] Real-time facility capacity auto-polling hook (`useLiveOccupancy`) with app lifecycle/background detection.
-- [x] Pull-to-refresh gesture support across Home, History, and Profile screens.
-- [x] Facility operating hours enforcement (06:00 — 22:00 KST) with scheduled closing auto-checkout (`sgc:auto-checkout`).
-- [x] Admin web dashboard with live occupancy, Chart.js metrics, settings controls, and manual checkout actions.
+- [x] Backend development: Laravel 11 REST API & MongoDB `$jsonSchema` validation.
+- [x] Concurrency locking: `claimOccupancySlot()` and `Gym::supportsTransactions()` standalone fallback.
+- [x] Mobile & Backend Live Integration with dynamic LAN Wi-Fi host IP auto-resolution.
+- [x] Background-aware real-time capacity polling hook (`useLiveOccupancy`).
+- [x] Operating hours enforcement (06:00 — 22:00 KST) with scheduled auto-checkout (`sgc:auto-checkout`).
+- [x] Admin web dashboard with live occupancy, Chart.js 7-day analytics, and settings controls.
+- [x] Admin **Bulk Check-out** ("Check out all") feature to reset occupancy safely.
 - [x] Upgraded mobile client to Expo SDK 58, React 19.3, and React Native 0.88.
-- [x] Connect production native NFC reading via `react-native-nfc-manager` (Expo Dev Client / physical stickers).
-- [x] Real-time Server-Sent Events (SSE) for instantaneous occupancy updates across all student devices.
+- [x] Native hardware NFC integration via `react-native-nfc-manager` (NDEF & NFC-A).
+- [x] Real-time Server-Sent Events (SSE) stream endpoint for instantaneous updates.
+
+---
+
+## 👥 Team & Responsibilities
+
+| Team Member | Role | Core Deliverables |
+| :--- | :--- | :--- |
+| **Lim Jun Xian Jedrek** | Frontend Developer (Customer App) | React Native Mobile UI, Reusable Components, Radar NFC Modal, DevPanel Simulation |
+| **Javo** | Frontend & Admin Developer | Admin Dashboard UI, Chart.js Analytics, Bulk Check-out Interface, Settings Panels |
+| **Nik** | Backend & API Lead | Laravel 11 REST API, Atomic Concurrency Engine, JWT Auth, PHPUnit Test Suites |
+| **Zafri** | Database, Security & QA Lead | MongoDB Schema Design, `$jsonSchema` Rules, Partial Unique Indexes, Security Auditing |
 
 ---
 

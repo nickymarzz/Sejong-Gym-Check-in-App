@@ -41,13 +41,17 @@ class CheckInController extends Controller
                 ], 422);
             }
 
-            $session = DB::getMongoClient()->startSession();
-            $session->startTransaction();
+            $useTransaction = Gym::supportsTransactions();
+            $session = $useTransaction ? DB::getMongoClient()->startSession() : null;
+            if ($session) {
+                $session->startTransaction();
+            }
+            $slotClaimed = false;
 
             try {
                 $gym = Gym::where('gymId', $gymId)->first();
                 if (!$gym) {
-                    $session->abortTransaction();
+                    if ($session) $session->abortTransaction();
                     return response()->json([
                         'status' => 'error',
                         'message' => 'Gym not found.'
@@ -55,21 +59,13 @@ class CheckInController extends Controller
                 }
 
                 if (!$gym->isOpen()) {
-                    $session->abortTransaction();
+                    if ($session) $session->abortTransaction();
                     $msg = ($gym->status !== 'open')
                         ? 'Gym is currently ' . $gym->status . '.'
                         : 'Gym is currently closed. Operating hours are ' . $gym->getOperatingHoursString() . '.';
                     return response()->json([
                         'status' => 'error',
                         'message' => $msg
-                    ], 409);
-                }
-
-                if ($gym->isAtCapacity()) {
-                    $session->abortTransaction();
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Gym is at full capacity. Please wait or try another facility.'
                     ], 409);
                 }
 
@@ -88,9 +84,9 @@ class CheckInController extends Controller
                         $closeTimeStr = $gym->openingHours['close'] ?? '22:00';
                         $closedAt = $sessionTime->copy()->setTimeFromTimeString($closeTimeStr);
                         $activeSession->autoExpire($closedAt);
-                        $gym->decrementOccupancy();
+                        $gym->releaseOccupancySlot($session);
                     } else {
-                        $session->abortTransaction();
+                        if ($session) $session->abortTransaction();
                         return response()->json([
                             'status' => 'error',
                             'message' => 'Already checked in. Please check out first.'
@@ -98,9 +94,16 @@ class CheckInController extends Controller
                     }
                 }
 
-                $now = now();
+                if ($gym->claimOccupancySlot($session) === null) {
+                    if ($session) $session->abortTransaction();
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Gym is at full capacity. Please wait or try another facility.'
+                    ], 409);
+                }
+                $slotClaimed = true;
 
-                $gym->incrementOccupancy();
+                $now = now();
 
                 $checkIn = CheckIn::create([
                     'userId' => $user->userId,
@@ -116,7 +119,10 @@ class CheckInController extends Controller
                 $user->checkInTime = $now;
                 $user->save();
 
-                $session->commitTransaction();
+                if ($session) {
+                    $session->commitTransaction();
+                }
+                $slotClaimed = false;
 
                 $notification = Notification::create([
                     'userId' => $user->userId,
@@ -181,18 +187,27 @@ class CheckInController extends Controller
 
             } catch (\MongoDB\Driver\Exception\RuntimeException $e) {
                 if (str_contains($e->getMessage(), 'E11000')) {
-                    $session->abortTransaction();
+                    if ($session) {
+                        $session->abortTransaction();
+                    } elseif ($slotClaimed && isset($gym)) {
+                        $gym->releaseOccupancySlot();
+                    }
                     return response()->json([
                         'status' => 'error',
                         'message' => 'Duplicate check-in detected. Please wait a moment and try again.'
                     ], 409);
                 }
+                if ($slotClaimed && !$session && isset($gym)) {
+                    $gym->releaseOccupancySlot();
+                }
                 throw $e;
             }
 
         } catch (\Exception $e) {
-            if (isset($session)) {
+            if (isset($session) && $session) {
                 try { $session->abortTransaction(); } catch (\Exception $_) {}
+            } elseif (!empty($slotClaimed) && isset($gym)) {
+                try { $gym->releaseOccupancySlot(); } catch (\Exception $_) {}
             }
             return response()->json([
                 'status' => 'error',
@@ -222,8 +237,11 @@ class CheckInController extends Controller
                 ], 422);
             }
 
-            $session = DB::getMongoClient()->startSession();
-            $session->startTransaction();
+            $useTransaction = Gym::supportsTransactions();
+            $session = $useTransaction ? DB::getMongoClient()->startSession() : null;
+            if ($session) {
+                $session->startTransaction();
+            }
 
             try {
                 $activeSession = CheckIn::where('userId', $user->userId)
@@ -231,7 +249,7 @@ class CheckInController extends Controller
                     ->first();
 
                 if (!$activeSession) {
-                    $session->abortTransaction();
+                    if ($session) $session->abortTransaction();
                     return response()->json([
                         'status' => 'error',
                         'message' => 'No active check-in session found.'
@@ -240,7 +258,7 @@ class CheckInController extends Controller
 
                 $gymId = $validated['gymId'] ?? $activeSession->gymId;
                 if ($gymId !== $activeSession->gymId) {
-                    $session->abortTransaction();
+                    if ($session) $session->abortTransaction();
                     return response()->json([
                         'status' => 'error',
                         'message' => 'Active check-in belongs to a different gym.'
@@ -249,7 +267,7 @@ class CheckInController extends Controller
 
                 $gym = Gym::where('gymId', $gymId)->first();
                 if (!$gym) {
-                    $session->abortTransaction();
+                    if ($session) $session->abortTransaction();
                     return response()->json([
                         'status' => 'error',
                         'message' => 'Gym not found.'
@@ -258,7 +276,7 @@ class CheckInController extends Controller
 
                 $now = now();
 
-                $gym->decrementOccupancy();
+                $gym->releaseOccupancySlot($session);
 
                 $activeSession->checkOut();
 
@@ -266,7 +284,9 @@ class CheckInController extends Controller
                 $user->checkInTime = null;
                 $user->save();
 
-                $session->commitTransaction();
+                if ($session) {
+                    $session->commitTransaction();
+                }
 
                 $notification = Notification::create([
                     'userId' => $user->userId,
@@ -325,12 +345,12 @@ class CheckInController extends Controller
                 ], 200);
 
             } catch (\Exception $e) {
-                $session->abortTransaction();
+                if ($session) $session->abortTransaction();
                 throw $e;
             }
 
         } catch (\Exception $e) {
-            if (isset($session)) {
+            if (isset($session) && $session) {
                 try { $session->abortTransaction(); } catch (\Exception $_) {}
             }
             return response()->json([

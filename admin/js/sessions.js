@@ -8,6 +8,7 @@
   const el = {
     count: $('inside-count'),
     filter: $('inside-filter'),
+    checkoutAll: $('inside-checkout-all'),
     table: $('inside-table'),
     empty: $('inside-empty'),
   };
@@ -67,12 +68,15 @@
   function render() {
     if (!supported) {
       setText(el.count, '');
+      el.checkoutAll.hidden = true;
       showEmpty('This version of the API does not list the people inside.');
       return;
     }
 
     const list = state.sessions;
     if (!list) return;
+
+    el.checkoutAll.hidden = list.length === 0;
 
     const query = el.filter.value.trim().toLowerCase();
     const rows = list.filter((session) => matches(session, query));
@@ -111,15 +115,47 @@
     render();
   }
 
+  async function handleCheckoutAll() {
+    const list = state.sessions || [];
+    if (list.length === 0) return;
+
+    const confirmed = await SGC.dom.confirmModal({
+      title: 'Check out all students?',
+      message: `Are you sure you want to manually check out all ${list.length} active student${list.length === 1 ? '' : 's'} and reset occupancy to 0?`,
+      confirmText: 'Check out all',
+      confirmTone: 'danger',
+    });
+    if (!confirmed) return;
+
+    el.checkoutAll.disabled = true;
+    el.checkoutAll.textContent = 'Checking out…';
+    const res = await api.checkoutAllStudents(cfg.GYM_ID);
+    el.checkoutAll.disabled = false;
+    el.checkoutAll.textContent = 'Check out all';
+
+    if (!res.ok) {
+      status.setError('sessions', res.message || 'Bulk checkout failed.');
+      return;
+    }
+
+    status.setError('sessions', '');
+    await tick();
+    if (SGC.live && SGC.live.tick) SGC.live.tick();
+  }
+
   function reset() {
     supported = true;
     el.filter.value = '';
+    el.checkoutAll.hidden = true;
+    el.checkoutAll.disabled = false;
+    el.checkoutAll.textContent = 'Check out all';
     el.table.textContent = '';
     el.empty.hidden = true;
     setText(el.count, '');
   }
 
   el.filter.addEventListener('input', render);
+  el.checkoutAll.addEventListener('click', handleCheckoutAll);
 
   SGC.sessions = { render, tick, reset };
 }(window.SGC));

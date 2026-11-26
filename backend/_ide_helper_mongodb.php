@@ -14,6 +14,10 @@ namespace MongoDB\BSON {
     }
 }
 
+namespace MongoDB\Driver {
+    class Session {}
+}
+
 namespace MongoDB\Driver\Exception {
     class RuntimeException extends \RuntimeException {}
 }

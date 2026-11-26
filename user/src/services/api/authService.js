@@ -55,8 +55,9 @@ export async function logout() {
 
 export async function getCurrentUser() {
   const res = await apiRequest('/auth/me', { method: 'GET' });
-  if (res.success && res.data?.user) {
-    return { success: true, user: res.data.user };
+  const user = res.data?.user || res.data;
+  if (res.success && user && (user.userId || user.studentId)) {
+    return { success: true, user };
   }
   return { success: false, message: res.message };
 }

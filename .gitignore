@@ -8,3 +8,4 @@ scripts/start_admin.sh
 .agents
 google-services.json
 GoogleService-Info.plist
+docs/
