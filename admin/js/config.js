@@ -7,7 +7,7 @@ window.SGC.config = {
   LIVE_POLL_MS: 3500,
   SUMMARY_POLL_MS: 30000,
   MAX_CAPACITY: 500,
-  ADMIN_ROLES: ['admin', 'staff'],
+  ADMIN_ROLES: ['admin'],
   STORAGE: {
     TOKEN: 'sgc_admin_token',
     USER: 'sgc_admin_user',

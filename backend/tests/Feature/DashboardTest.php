@@ -6,7 +6,7 @@ use Tests\TestCase;
 
 class DashboardTest extends TestCase
 {
-    public function test_non_staff_user_is_forbidden_from_dashboard(): void
+    public function test_non_admin_user_is_forbidden_from_dashboard(): void
     {
         $gym = $this->createTestGym();
         $student = $this->createStudentUser();
@@ -17,7 +17,7 @@ class DashboardTest extends TestCase
         $response->assertStatus(403)
             ->assertJson([
                 'status' => 'error',
-                'message' => 'Admin or staff role required.'
+                'message' => 'Admin role required.'
             ]);
     }
 

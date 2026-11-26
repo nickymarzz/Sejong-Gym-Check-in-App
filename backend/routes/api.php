@@ -68,7 +68,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
     });
 
-    Route::prefix('dashboard')->middleware('role.staff')->group(function () {
+    Route::prefix('dashboard')->middleware('role.admin')->group(function () {
         Route::get('/gyms/{gymId}/summary/{date}', [DashboardController::class, 'dailySummary'])->name('dashboard.dailySummary');
         Route::get('/gyms/{gymId}/weekly', [DashboardController::class, 'weeklySummary'])->name('dashboard.weeklySummary');
         Route::get('/gyms/{gymId}/active', [DashboardController::class, 'activeSessions'])->name('dashboard.activeSessions');

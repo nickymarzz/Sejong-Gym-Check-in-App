@@ -1,4 +1,4 @@
-<!-- markdownlint-configure-file { "MD033": { "allowed_elements": ["p", "img", "strong", "a", "details", "summary", "b"] }, "MD041": false } -->
+<!-- markdownlint-configure-file { "MD013": false, "MD033": { "allowed_elements": ["p", "img", "strong", "a", "details", "summary", "b"] }, "MD041": false } -->
 
 <p align="center">
   <img src="user/assets/logo.png" alt="Sejong Gym Check-in App Logo" width="130" />
@@ -84,7 +84,7 @@ flowchart LR
 
     Sticker -.->|"Contactless Tap (Ndef/NfcA)"| StudentApp
     StudentApp <-->|"HTTPS REST / JWT Bearer"| Gateway
-    AdminApp <-->|"HTTPS REST / Staff JWT"| Gateway
+    AdminApp <-->|"HTTPS REST / Admin JWT"| Gateway
     Gateway --> Controllers
     Controllers --> Concurrency
     Concurrency <-->|"Atomic findOneAndUpdate"| MongoDB
@@ -132,7 +132,7 @@ sequenceDiagram
 
 | Capability / Factor | SGC (Passive NFC Sticker) | Traditional Turnstiles / Kiosks | Paper Sign-in Sheets | Static / Dynamic QR Displays |
 | :--- | :--- | :--- | :--- | :--- |
-| **Hardware Investment** | **$\approx \$0.20$** per sticker | $\$3,000$ — $\$10,000$ per gate | Negligible | $\$150$ — $\$400$ display hardware |
+| **Hardware Investment** | **~₩300 (~$0.20)** per sticker | $3,000 – $10,000 per gate | Negligible | $150 – $400 display hardware |
 | **Student Privacy** | **Zero student data exposed** (JWT in app) | Card cloning / badge theft risk | **Zero privacy** (names & IDs visible to all) | Vulnerable to shoulder-surfing |
 | **Real-Time Capacity** | **Instant live telemetry** (SSE + polling) | Live via proprietary server | **None** (requires manual headcounts) | Delayed web hooks |
 | **Anti-Fraud / Anti-Spoof** | **Atomic server-side lock** + JWT session | Physical barrier | No verification (fake names) | High fraud risk (shared screenshots) |
@@ -168,10 +168,10 @@ sequenceDiagram
 
 ### 🖥️ Admin Facility Dashboard (`/admin`)
 
-- **Role-Based Access Control**: Strict `EnsureStaffRole` middleware protecting `/api/dashboard/*` (accessible only by `admin` and `staff` roles).
+- **Role-Based Access Control**: Strict route protection on `/api/dashboard/*` (accessible exclusively by `admin` users).
 - **"Inside Now" Roster & Instant Bulk Check-Out**:
   - Live table of currently checked-in students with duration inside (`minutesInside`).
-  - Individual manual checkout buttons for immediate staff action.
+  - Individual manual checkout buttons for immediate administrator action.
   - **"Check out all" bulk action button**: One-click modal to check out all active occupants and reset facility occupancy to 0.
 - **7-Day Visual Analytics**:
   - Powered by Chart.js 4.4.
@@ -185,7 +185,7 @@ sequenceDiagram
 - **Transaction & Standalone Fallback**: `Gym::supportsTransactions()` dynamically checks replica set / `mongos` support and falls back to atomic single-document updates with compensating release on standalone MongoDB instances.
 - **Automated Closing & Stale Auto-Heal**:
   - Scheduled command (`sgc:auto-checkout`) automatically closes active sessions at 22:00 KST, preceded by closing reminders at 21:30 KST (`sgc:send-reminders`).
-  - Stale session recovery in `CheckInController::store()` auto-expires sessions lasting $\ge 16$ hours or originating from previous calendar dates.
+  - Stale session recovery in `CheckInController::store()` auto-expires sessions lasting ≥ 16 hours or originating from previous calendar dates.
 - **Asynchronous Redis Queue Support**: Push notification dispatches (`SendFcmNotificationJob`, `SendCapacityAlertJob`, `UpdateDailySummaryJob`) implement `ShouldQueue` for sub-200ms API response latency.
 
 ---
@@ -229,7 +229,7 @@ Sejong-Gym-Check-in-App/
 │   ├── app/
 │   │   ├── Console/Commands/          # sgc:auto-checkout, sgc:send-reminders, sgc:seed
 │   │   ├── Http/Controllers/          # Auth, CheckIn, Gym, Notification, Dashboard, User
-│   │   ├── Http/Middleware/           # EnsureStaffRole, JwtMiddleware
+│   │   ├── Http/Middleware/           # EnsureAdminRole, JwtMiddleware
 │   │   ├── Jobs/                      # SendFcmNotificationJob, SendCapacityAlertJob
 │   │   └── Models/                    # Gym (claimOccupancySlot), CheckIn, User, Notification
 │   ├── config/                        # database (MongoDB/Redis), jwt, queue, app
@@ -336,12 +336,11 @@ Visit [`http://localhost:5500`](http://localhost:5500) and sign in using the Adm
 
 The database seed provides pre-configured student and admin accounts:
 
-| Portal / Role | Identifier (User ID / Student ID) | Password | Default Capacity / Role |
+| Client Application / Role | Identifier (Student ID / Admin ID) | Password | Details / Assigned Permissions |
 | :--- | :--- | :--- | :--- |
 | **Student Mobile App** | `20241234` (Demo Student) | `password` | Department of Computer Engineering |
 | **Student Mobile App (Alt)** | `20245678` (Active Occupant) | `password` | Pre-checked in for immediate checkout test |
-| **Admin Dashboard** | `00000001` (Admin Lead) | `password` | Role: `admin` (Full facility settings access) |
-| **Staff Portal** | `00000002` (Gym Staff) | `password` | Role: `staff` (Checkouts & status supervision) |
+| **Admin Dashboard** | `00000001` (Gym Admin) | `password` | Role: `admin` (Full facility supervision & settings) |
 
 ### Testing Check-in & Edge Cases via DevPanel
 
@@ -380,19 +379,19 @@ All endpoints are hosted at `http://127.0.0.1:8000/api`. The standard response e
 | `GET` | `/api/checkins/active` | Bearer JWT | Get authenticated student's active check-in session. |
 | `GET` | `/api/checkins/history` | Bearer JWT | Retrieve student's paginated session history with durations. |
 
-### Admin & Staff Management (`EnsureStaffRole`)
+### Admin Management (`EnsureAdminRole`)
 
 | Method | Endpoint | Auth | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/dashboard/gyms/{gymId}/summary/{date}` | Bearer JWT (`admin`/`staff`) | Daily analytics summary (hourly histogram, peak occupancy). |
-| `GET` | `/api/dashboard/gyms/{gymId}/weekly` | Bearer JWT (`admin`/`staff`) | 7-day analytics trend for Chart.js dashboard. |
-| `GET` | `/api/dashboard/gyms/{gymId}/active` | Bearer JWT (`admin`/`staff`) | List of all students currently inside the gym. |
-| `PATCH` | `/api/dashboard/gyms/{gymId}/settings` | Bearer JWT (`admin`/`staff`) | Update `capacity` (1–500), `status` (`open`/`closed`/`maintenance`), or `openingHours`. |
-| `POST` | `/api/dashboard/gyms/{gymId}/active/{userId}/checkout` | Bearer JWT (`admin`/`staff`) | Manually force check-out an individual student. |
-| `POST` | `/api/dashboard/gyms/{gymId}/checkout-all` | Bearer JWT (`admin`/`staff`) | **Bulk action**: Force check-out all active occupants and reset occupancy to 0. |
+| `GET` | `/api/dashboard/gyms/{gymId}/summary/{date}` | Bearer JWT (`admin`) | Daily analytics summary (hourly histogram, peak occupancy). |
+| `GET` | `/api/dashboard/gyms/{gymId}/weekly` | Bearer JWT (`admin`) | 7-day analytics trend for Chart.js dashboard. |
+| `GET` | `/api/dashboard/gyms/{gymId}/active` | Bearer JWT (`admin`) | List of all students currently inside the gym. |
+| `PATCH` | `/api/dashboard/gyms/{gymId}/settings` | Bearer JWT (`admin`) | Update `capacity` (1–500), `status` (`open`/`closed`/`maintenance`), or `openingHours`. |
+| `POST` | `/api/dashboard/gyms/{gymId}/active/{userId}/checkout` | Bearer JWT (`admin`) | Manually force check-out an individual student. |
+| `POST` | `/api/dashboard/gyms/{gymId}/checkout-all` | Bearer JWT (`admin`) | **Bulk action**: Force check-out all active occupants and reset occupancy to 0. |
 
 > [!IMPORTANT]
-> All `/api/dashboard/*` endpoints strictly require a JWT containing the `admin` or `staff` role. Requests with student tokens receive HTTP `403 Forbidden`.
+> All `/api/dashboard/*` endpoints strictly require a JWT containing the `admin` role. Requests with student tokens receive HTTP `403 Forbidden`.
 
 <details>
 <summary><b>🔍 View Example JSON Payloads & Responses</b></summary>
@@ -474,7 +473,7 @@ OK (35 tests, 122 assertions)
 
 - **`AuthTest`**: Token creation, password hashing, profile extraction, and role verification.
 - **`CheckInTest`**: Valid check-in/out flows, occupancy increment/decrement, and capacity boundary checks.
-- **`NfcEdgeCasesTest`**: Wrong NFC payloads, duplicate taps, stale session auto-healing ($\ge 16$ hrs), and after-hours check-in rejection.
+- **`NfcEdgeCasesTest`**: Wrong NFC payloads, duplicate taps, stale session auto-healing (≥ 16 hrs), and after-hours check-in rejection.
 - **`LatencyBenchmarkTest`**: Verifies that authenticated check-in operations respond in **under 200ms** (`MAX_ALLOWED_LATENCY_MS = 200.0`).
 - **`AdminDashboardTest`**: Settings mutation, authorization barriers, and bulk checkout verification.
 
